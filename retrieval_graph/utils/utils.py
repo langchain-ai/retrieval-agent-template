@@ -1,6 +1,7 @@
 from typing import Optional
-from langchain_core.messages import AnyMessage
+
 from langchain_core.documents import Document
+from langchain_core.messages import AnyMessage
 
 
 def get_message_text(msg: AnyMessage) -> str:
@@ -17,7 +18,7 @@ def get_message_text(msg: AnyMessage) -> str:
 
 def _format_doc(doc: Document) -> str:
     metadata = doc.metadata or {}
-    meta = "".join(f" {k}={v!r}" for k, v in metadata)
+    meta = "".join(f" {k}={v!r}" for k, v in metadata.items())
     if meta:
         meta = f" {meta}"
 

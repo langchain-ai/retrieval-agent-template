@@ -1,18 +1,22 @@
+import os
+import uuid
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Literal, Optional, Sequence, Union
-import uuid
 
-from langchain_community.vectorstores import SKLearnVectorStore
 from langchain_core.documents import Document
 from langchain_core.messages import AnyMessage
-from langchain_core.vectorstores.base import VectorStoreRetriever
 from langchain_core.runnables import RunnableConfig
+from langchain_core.vectorstores.base import VectorStoreRetriever
+from langchain_elasticsearch import ElasticsearchStore
 from langchain_openai import OpenAIEmbeddings
-from langgraph.graph import add_messages
 from langgraph.channels.context import Context
-from retrieval_graph.utils.configuration import ensure_configurable
+from langgraph.graph import add_messages
 from typing_extensions import Annotated, TypedDict
+
+from retrieval_graph.utils.configuration import ensure_configurable
+
+############################  Doc Indexing State  #############################
 
 
 def reduce_docs(
@@ -38,6 +42,45 @@ def reduce_docs(
                 coerced.append(item)
         return coerced
     return existing or []
+
+
+@contextmanager
+def make_retriever(config: RunnableConfig):
+    """Create a retriever for the agent, based on the current configuration."""
+    # This is a local example.
+    configuration = ensure_configurable(config)
+    embedding_model = OpenAIEmbeddings(model=configuration["embedding_model_name"])
+    user_id = config["configurable"]["user_id"]
+    if not user_id:
+        raise ValueError("Please provide a valid user_id in the configuration.")
+    data_path = Path("data", user_id, "retriever.json")
+    data_path.parent.mkdir(parents=True, exist_ok=True)
+    vstore = ElasticsearchStore(
+        es_url=os.environ["ELASTICSEARCH_URL"],
+        es_api_key=os.environ["ELASTICSEARCH_API_KEY"],
+        index_name="langchain_index",
+        embedding=embedding_model,
+    )
+
+    search_kwargs = configuration["search_kwargs"] or {}
+
+    search_filter = search_kwargs.setdefault("filter", [])
+    search_filter.append({"term": {"metadata.user_id": user_id}})
+    yield vstore.as_retriever(search_kwargs=search_kwargs)
+
+
+# The index state defines the simple IO for the single-node index graph
+class IndexState(TypedDict):
+    docs: Annotated[Sequence[Document], reduce_docs]
+    """A list of documents that the agent can index."""
+    retriever: Annotated[VectorStoreRetriever, Context(make_retriever)]
+    """The retriever is managed by LangGraph "in context."
+    
+    Context state vars are not serialized. Instead, they are re-created
+    for each invocation of the graph."""
+
+
+#############################  Agent State  ###################################
 
 
 # Optional, the InputState is a restricted version of the State that is used to
@@ -73,37 +116,13 @@ class InputState(TypedDict):
         A new list of messages with the messages from `right` merged into `left`.
         If a message in `right` has the same ID as a message in `left`, the
         message from `right` will replace the message from `left`."""
-    docs: Annotated[Sequence[Document], reduce_docs]
-    """A list of documents that the agent can index."""
 
 
 # This is the primary state of your agent, where you can store any information
 
 
 def add_queries(existing: Sequence[str], new: Sequence[str]) -> Sequence[str]:
-    return existing + new
-
-
-@contextmanager
-def make_retriever(config: RunnableConfig):
-    """Create a retriever for the agent, based on the current configuration."""
-    # This is a local example.
-    configuration = ensure_configurable(config)
-    embedding_model = OpenAIEmbeddings(model=configuration["embedding_model_name"])
-    thread_id = config["configurable"]["thread_id"]
-    data_path = Path("data", thread_id, "retriever.json")
-    data_path.parent.mkdir(parents=True, exist_ok=True)
-    persist_path = str(data_path.absolute())
-    # Hack. bad initial state. # TODO: use elastic or something
-    vector_store = SKLearnVectorStore.from_texts(
-        [""] * 4, embedding_model, persist_path=persist_path
-    )
-
-    try:
-        yield vector_store.as_retriever(search_kwargs=configuration["search_kwargs"])
-    finally:
-        if vector_store._embeddings:
-            vector_store.persist()
+    return list(existing) + list(new)
 
 
 class State(InputState):

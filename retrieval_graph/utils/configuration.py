@@ -1,19 +1,39 @@
 """Define the configurable parameters for the agent."""
 
 from typing import Optional
-from typing_extensions import TypedDict
+
 from langchain_core.runnables import RunnableConfig
+from typing_extensions import TypedDict
 
 
-class Configuration(TypedDict):
+class IndexConfiguration(TypedDict):
+    embedding_model_name: str
+    search_kwargs: dict
+    user_id: str
+
+
+def ensure_index_configurable(
+    config: Optional[RunnableConfig] = None,
+) -> IndexConfiguration:
+    """Ensure the defaults are populated."""
+    configurable = (config or {}).get("configurable") or {}
+    return IndexConfiguration(
+        user_id=configurable["user_id"],
+        embedding_model_name=configurable.get(
+            "embedding_model_name",
+            "text-embedding-3-small",
+        ),
+        search_kwargs=configurable.get("search_kwargs") or {},
+    )
+
+
+class Configuration(IndexConfiguration):
     """The configuration for the agent."""
 
     response_system_prompt: str
     response_model_name: str
     query_system_prompt: str
     query_model_name: str
-    embedding_model_name: str
-    search_kwargs: dict
     thread_id: str
 
 
@@ -21,6 +41,7 @@ def ensure_configurable(config: Optional[RunnableConfig] = None) -> Configuratio
     """Ensure the defaults are populated."""
     configurable = (config or {}).get("configurable") or {}
     return Configuration(
+        user_id=configurable["user_id"],
         thread_id=configurable["thread_id"],
         response_system_prompt=configurable.get(
             "response_system_prompt",
