@@ -11,9 +11,9 @@ from langchain_core.pydantic_v1 import BaseModel
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph
 
-from retrieval_graph.utils.configuration import Configuration, ensure_configurable
-from retrieval_graph.utils.state import InputState, State
-from retrieval_graph.utils.utils import format_docs, get_message_text
+from retrieval_graph.configuration import Configuration
+from retrieval_graph.state import InputState, State
+from retrieval_graph.utils import format_docs, get_message_text
 
 # Define the function that calls the model
 
@@ -31,16 +31,16 @@ async def generate_query(state: State, *, config: RunnableConfig | None = None):
         human_input = get_message_text(messages[-1])
         return {"queries": [human_input]}
     else:
-        configuration = ensure_configurable(config)
+        configuration = Configuration.from_runnable_config(config)
         # Feel free to customize the prompt, model, and other logic!
         prompt = ChatPromptTemplate.from_messages(
             [
-                ("system", configuration["query_system_prompt"]),
+                ("system", configuration.query_system_prompt),
                 ("placeholder", "{messages}"),
             ]
         )
         model = init_chat_model(
-            configuration["response_model_name"]
+            configuration.response_model_name
         ).with_structured_output(SearchQuery)
 
         message_value = await prompt.ainvoke(
@@ -66,15 +66,15 @@ async def retrieve(state: State, *, config: RunnableConfig | None = None):
 
 async def respond(state: State, *, config: RunnableConfig | None = None):
     """Call the LLM powering our "agent"."""
-    configuration = ensure_configurable(config)
+    configuration = Configuration.from_runnable_config(config)
     # Feel free to customize the prompt, model, and other logic!
     prompt = ChatPromptTemplate.from_messages(
         [
-            ("system", configuration["response_system_prompt"]),
+            ("system", configuration.response_system_prompt),
             ("placeholder", "{messages}"),
         ]
     )
-    model = init_chat_model(configuration["response_model_name"])
+    model = init_chat_model(configuration.response_model_name)
 
     retrieved_docs = format_docs(list(state["retrieved_docs"]))
     message_value = await prompt.ainvoke(

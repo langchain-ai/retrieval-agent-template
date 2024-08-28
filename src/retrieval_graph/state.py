@@ -1,20 +1,21 @@
 import os
 import uuid
 from contextlib import contextmanager
-from pathlib import Path
 from typing import Literal, Optional, Sequence, Union
 
 from langchain_core.documents import Document
+from langchain_core.embeddings import Embeddings
 from langchain_core.messages import AnyMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_core.vectorstores.base import VectorStoreRetriever
-from langchain_elasticsearch import ElasticsearchStore
 from langchain_openai import OpenAIEmbeddings
 from langgraph.channels.context import Context
 from langgraph.graph import add_messages
+from retrieval_graph.configuration import (
+    Configuration,
+    IndexConfiguration,
+)
 from typing_extensions import Annotated, TypedDict
-
-from retrieval_graph.utils.configuration import ensure_configurable
 
 ############################  Doc Indexing State  #############################
 
@@ -45,16 +46,10 @@ def reduce_docs(
 
 
 @contextmanager
-def make_retriever(config: RunnableConfig):
-    """Create a retriever for the agent, based on the current configuration."""
-    # This is a local example.
-    configuration = ensure_configurable(config)
-    embedding_model = OpenAIEmbeddings(model=configuration["embedding_model_name"])
-    user_id = config["configurable"]["user_id"]
-    if not user_id:
-        raise ValueError("Please provide a valid user_id in the configuration.")
-    data_path = Path("data", user_id, "retriever.json")
-    data_path.parent.mkdir(parents=True, exist_ok=True)
+def make_elastic_retriever(configuration: Configuration, embedding_model: Embeddings):
+    """Configure this agent to connect to a specific elastic index."""
+    from langchain_elasticsearch import ElasticsearchStore
+
     vstore = ElasticsearchStore(
         es_url=os.environ["ELASTICSEARCH_URL"],
         es_api_key=os.environ["ELASTICSEARCH_API_KEY"],
@@ -62,11 +57,50 @@ def make_retriever(config: RunnableConfig):
         embedding=embedding_model,
     )
 
-    search_kwargs = configuration["search_kwargs"] or {}
+    search_kwargs = configuration.search_kwargs
 
     search_filter = search_kwargs.setdefault("filter", [])
-    search_filter.append({"term": {"metadata.user_id": user_id}})
+    search_filter.append({"term": {"metadata.user_id": configuration.user_id}})
     yield vstore.as_retriever(search_kwargs=search_kwargs)
+
+
+@contextmanager
+def make_pinecone_retriever(configuration: Configuration, embedding_model: Embeddings):
+    """Configure this agent to connect to a specific pinecone index."""
+
+    from langchain_pinecone import PineconeVectorStore
+
+    search_kwargs = configuration.search_kwargs
+
+    search_filter = search_kwargs.setdefault("filter", [])
+    search_filter.append({"user_id": configuration.user_id})
+    vstore = PineconeVectorStore.from_existing_index(
+        os.environ["PINECONE_INDEX_NAME"], embedding=embedding_model
+    )
+    yield vstore.as_retriever(search_kwargs=search_kwargs)
+
+
+@contextmanager
+def make_retriever(config: RunnableConfig):
+    """Create a retriever for the agent, based on the current configuration."""
+    configuration = IndexConfiguration.from_runnable_config(config)
+    embedding_model = OpenAIEmbeddings(model=configuration.embedding_model_name)
+    user_id = configuration.user_id
+    if not user_id:
+        raise ValueError("Please provide a valid user_id in the configuration.")
+    match configuration.retriever_provider:
+        case "elastic":
+            with make_elastic_retriever(configuration, embedding_model) as retriever:
+                yield retriever
+        case "pinecone":
+            with make_pinecone_retriever(configuration, embedding_model) as retriever:
+                yield retriever
+        case _:
+            raise ValueError(
+                "Unrecognized retriever_provider in configuration. "
+                f"Expected one of: {', '.join(Configuration.__annotations__['retriever_provider'].__args__)}\n"
+                f"Got: {configuration.retriever_provider}"
+            )
 
 
 # The index state defines the simple IO for the single-node index graph
