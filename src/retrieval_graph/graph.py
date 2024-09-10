@@ -6,7 +6,6 @@ and key functions for processing user inputs, generating queries, retrieving
 relevant documents, and formulating responses.
 """
 
-from dataclasses import asdict
 from datetime import datetime, timezone
 from typing import cast
 
@@ -72,7 +71,7 @@ async def generate_query(
 
         message_value = await prompt.ainvoke(
             {
-                **asdict(state),
+                "messages": state.messages,
                 "queries": "\n- ".join(state.queries),
                 "system_time": datetime.now(tz=timezone.utc).isoformat(),
             },
@@ -123,7 +122,7 @@ async def respond(
     retrieved_docs = format_docs(state.retrieved_docs)
     message_value = await prompt.ainvoke(
         {
-            **asdict(state),
+            "messages": state.messages,
             "retrieved_docs": retrieved_docs,
             "system_time": datetime.now(tz=timezone.utc).isoformat(),
         },
