@@ -1,5 +1,5 @@
 import uuid
-from typing import Literal, Optional, Sequence, Union
+from typing import Any, Literal, Optional, Sequence, Union
 
 from langchain_core.documents import Document
 from langchain_core.messages import AnyMessage
@@ -16,7 +16,11 @@ from retrieval_graph import retrieval
 def reduce_docs(
     existing: Optional[Sequence[Document]],
     new: Union[
-        Sequence[Document], Sequence[dict], Sequence[str], str, Literal["delete"]
+        Sequence[Document],
+        Sequence[dict[str, Any]],
+        Sequence[str],
+        str,
+        Literal["delete"],
     ],
 ) -> Sequence[Document]:
     if new == "delete":

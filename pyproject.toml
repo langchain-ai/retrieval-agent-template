@@ -39,4 +39,9 @@ packages = ["langgraph.templates.retrieval_graph", "retrieval_graph"]
 "*" = ["py.typed"]
 
 [tool.uv]
-dev-dependencies = ["black>=24.8.0", "mypy>=0.6.4", "ruff"]
+dev-dependencies = [
+    "black>=24.8.0",
+    "codespell>=2.3.0",
+    "mypy>=0.6.4",
+    "ruff",
+]

@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 from typing import cast
 
 from langchain.chat_models import init_chat_model
+from langchain_core.documents import Document
+from langchain_core.messages import BaseMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.pydantic_v1 import BaseModel
 from langchain_core.runnables import RunnableConfig
@@ -24,7 +26,9 @@ class SearchQuery(BaseModel):
     query: str
 
 
-async def generate_query(state: State, *, config: RunnableConfig | None = None):
+async def generate_query(
+    state: State, *, config: RunnableConfig | None = None
+) -> dict[str, list[str]]:
     messages = state["messages"]
     if len(messages) == 1:
         # It's the first user question. We will use the input directly to search.
@@ -57,14 +61,18 @@ async def generate_query(state: State, *, config: RunnableConfig | None = None):
         }
 
 
-async def retrieve(state: State, *, config: RunnableConfig | None = None):
+async def retrieve(
+    state: State, *, config: RunnableConfig | None = None
+) -> dict[str, list[Document]]:
     query = state["queries"][-1]
     retriever = state["retriever"]
     response = await retriever.ainvoke(query, config)
     return {"retrieved_docs": response}
 
 
-async def respond(state: State, *, config: RunnableConfig | None = None):
+async def respond(
+    state: State, *, config: RunnableConfig | None = None
+) -> dict[str, list[BaseMessage]]:
     """Call the LLM powering our "agent"."""
     configuration = Configuration.from_runnable_config(config)
     # Feel free to customize the prompt, model, and other logic!

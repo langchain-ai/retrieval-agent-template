@@ -1,17 +1,21 @@
 import os
 from contextlib import contextmanager
+from typing import TYPE_CHECKING, Generator
 
 from langchain_core.embeddings import Embeddings
 from langchain_core.runnables import RunnableConfig
 from langchain_openai import OpenAIEmbeddings
-from retrieval_graph.configuration import (
-    Configuration,
-    IndexConfiguration,
-)
+
+from retrieval_graph.configuration import Configuration, IndexConfiguration
+
+if TYPE_CHECKING:
+    from langchain_core.vectorstores import VectorStoreRetriever
 
 
 @contextmanager
-def make_elastic_retriever(configuration: Configuration, embedding_model: Embeddings):
+def make_elastic_retriever(
+    configuration: IndexConfiguration, embedding_model: Embeddings
+) -> Generator[VectorStoreRetriever, None, None]:
     """Configure this agent to connect to a specific elastic index."""
     from langchain_elasticsearch import ElasticsearchStore
 
@@ -30,7 +34,9 @@ def make_elastic_retriever(configuration: Configuration, embedding_model: Embedd
 
 
 @contextmanager
-def make_pinecone_retriever(configuration: Configuration, embedding_model: Embeddings):
+def make_pinecone_retriever(
+    configuration: IndexConfiguration, embedding_model: Embeddings
+) -> Generator[VectorStoreRetriever, None, None]:
     """Configure this agent to connect to a specific pinecone index."""
 
     from langchain_pinecone import PineconeVectorStore
@@ -46,7 +52,9 @@ def make_pinecone_retriever(configuration: Configuration, embedding_model: Embed
 
 
 @contextmanager
-def make_weaviate_retriever(configuration: Configuration, embedding_model: Embeddings):
+def make_weaviate_retriever(
+    configuration: IndexConfiguration, embedding_model: Embeddings
+) -> Generator[VectorStoreRetriever, None, None]:
     """Configure this agent to connect to a specific weaviate index."""
 
     import weaviate
@@ -74,7 +82,9 @@ def make_weaviate_retriever(configuration: Configuration, embedding_model: Embed
 
 
 @contextmanager
-def make_retriever(config: RunnableConfig):
+def make_retriever(
+    config: RunnableConfig,
+) -> Generator[VectorStoreRetriever, None, None]:
     """Create a retriever for the agent, based on the current configuration."""
     configuration = IndexConfiguration.from_runnable_config(config)
     embedding_model = OpenAIEmbeddings(model=configuration.embedding_model_name)
