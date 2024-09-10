@@ -1,3 +1,197 @@
+---
+name: retrieval-agent-template
+schema: |
+  config_schemas:
+    indexer:
+      $ref: '#/$defs/IndexConfiguration'
+      $defs:
+        IndexConfiguration:
+          title: IndexConfiguration
+          type: object
+          properties:
+            user_id:
+              type: string
+            embedding_model_name:
+              __lg_studio_meta:
+                kind: embedding
+                options:
+                  - text-embedding-3-small
+                  - text-embedding-3-large
+                  - text-embedding-ada-002
+              type: string
+              default: text-embedding-3-small
+            retriever_provider:
+              __lg_studio_meta:
+                kind: retriever
+                options:
+                  - elastic
+                  - pinecone
+              enum:
+                - elastic
+                - pinecone
+              default: elastic
+            search_kwargs:
+              type: object
+          required:
+            - user_id
+    retrieval_graph:
+      $ref: '#/$defs/Configuration'
+      $defs:
+        Configuration:
+          title: Configuration
+          description: The configuration for the agent.
+          type: object
+          properties:
+            user_id:
+              type: string
+            thread_id:
+              type: string
+            embedding_model_name:
+              __lg_studio_meta:
+                kind: embedding
+                options:
+                  - text-embedding-3-small
+                  - text-embedding-3-large
+                  - text-embedding-ada-002
+              type: string
+              default: text-embedding-3-small
+            retriever_provider:
+              __lg_studio_meta:
+                kind: retriever
+                options:
+                  - elastic
+                  - pinecone
+              enum:
+                - elastic
+                - pinecone
+              default: elastic
+            search_kwargs:
+              type: object
+            response_system_prompt:
+              type: string
+              default: >
+                You are a helpful AI assistant. Answer the user's questions based on the retrieved documents.
+
+                {retrieved_docs}"
+
+                System time: {system_time}
+            response_model_name:
+              __lg_studio_meta:
+                kind: llm
+                options:
+                  - gpt-4o
+                  - gpt-4o-mini
+                  - gpt-4
+                  - gpt-4-turbo
+                  - gpt-4-0314
+                  - gpt-4-0613
+                  - gpt-4-32k
+                  - gpt-4-32k-0314
+                  - gpt-4-32k-0613
+                  - gpt-4-turbo-preview
+                  - gpt-4-1106-preview
+                  - gpt-4-0125-preview
+                  - gpt-4-vision-preview
+                  - gpt-3.5-turbo
+                  - gpt-3.5-turbo-0301
+                  - gpt-3.5-turbo-0613
+                  - gpt-3.5-turbo-1106
+                  - gpt-3.5-turbo-0125
+                  - gpt-3.5-turbo-16k
+                  - gpt-3.5-turbo-16k-0613
+                  - claude-3-5-sonnet-20240620
+                  - claude-3-opus-20240229
+                  - claude-3-sonnet-20240229
+                  - claude-3-haiku-20240307
+                  - claude-instant-1.2
+                  - claude-1.2
+                  - claude-2.0
+                  - claude-2.1
+                  - mythomax-l2-13b
+                  - starcoder-16b
+                  - mixtral-8x7b-instruct
+                  - mixtral-8x22b-instruct
+                  - llama-v3-8b-instruct
+                  - llama-v3-70b-instruct
+                  - llama-v3p1-405b-instruct-long
+                  - yi-large
+                  - gemma2-9b-it
+                  - mixtral-8x7b-instruct-hf
+                  - phi-3-vision-128k-instruct
+                  - llama-v3-70b-instruct-hf
+                  - llama-v3p1-405b-instruct
+                  - llama-v3-8b-instruct-hf
+                  - phi-3p5-vision-instruct
+                  - llama-v3p1-8b-instruct
+                  - llama-v3p1-70b-instruct
+              type: string
+              default: claude-3-5-sonnet-20240620
+            query_system_prompt:
+              type: string
+              default: >
+                Generate search queries to retrieve documents that may help answer the user's question. Previously, you made the following queries:
+                    
+                <previous_queries/>
+                {queries}
+                </previous_queries>
+
+                System time: {system_time}
+            query_model_name:
+              __lg_studio_meta:
+                kind: llm
+                options:
+                  - gpt-4o
+                  - gpt-4o-mini
+                  - gpt-4
+                  - gpt-4-turbo
+                  - gpt-4-0314
+                  - gpt-4-0613
+                  - gpt-4-32k
+                  - gpt-4-32k-0314
+                  - gpt-4-32k-0613
+                  - gpt-4-turbo-preview
+                  - gpt-4-1106-preview
+                  - gpt-4-0125-preview
+                  - gpt-4-vision-preview
+                  - gpt-3.5-turbo
+                  - gpt-3.5-turbo-0301
+                  - gpt-3.5-turbo-0613
+                  - gpt-3.5-turbo-1106
+                  - gpt-3.5-turbo-0125
+                  - gpt-3.5-turbo-16k
+                  - gpt-3.5-turbo-16k-0613
+                  - claude-3-5-sonnet-20240620
+                  - claude-3-opus-20240229
+                  - claude-3-sonnet-20240229
+                  - claude-3-haiku-20240307
+                  - claude-instant-1.2
+                  - claude-1.2
+                  - claude-2.0
+                  - claude-2.1
+                  - mythomax-l2-13b
+                  - starcoder-16b
+                  - mixtral-8x7b-instruct
+                  - mixtral-8x22b-instruct
+                  - llama-v3-8b-instruct
+                  - llama-v3-70b-instruct
+                  - llama-v3p1-405b-instruct-long
+                  - yi-large
+                  - gemma2-9b-it
+                  - mixtral-8x7b-instruct-hf
+                  - phi-3-vision-128k-instruct
+                  - llama-v3-70b-instruct-hf
+                  - llama-v3p1-405b-instruct
+                  - llama-v3-8b-instruct-hf
+                  - phi-3p5-vision-instruct
+                  - llama-v3p1-8b-instruct
+                  - llama-v3p1-70b-instruct
+              type: string
+              default: gpt-4o
+          required:
+            - user_id
+            - thread_id
+---
+
 # LangGraph Retrieval Agent Template
 
 This LangGraph template implements a simple, extensible agent that answers questions based on a retriever.
