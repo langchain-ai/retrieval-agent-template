@@ -97,19 +97,3 @@ def make_retriever(config: RunnableConfig):
                 f"Expected one of: {', '.join(Configuration.__annotations__['retriever_provider'].__args__)}\n"
                 f"Got: {configuration.retriever_provider}"
             )
-
-
-if __name__ == "__main__":
-    import time
-    import os
-    from pinecone import Pinecone, ServerlessSpec
-    from langchain_pinecone import PineconeVectorStore
-    from langchain_openai import OpenAIEmbeddings
-
-    pc = Pinecone(api_key="81f0d6bf-0032-4871-a773-99a349de1d33")
-
-    index = pc.Index("someproj")
-    vector_store = PineconeVectorStore(index=index, embedding=OpenAIEmbeddings())
-    results = vector_store.similarity_search(query="thud", k=1, filter={"bar": "baz"})
-    for doc in results:
-        print(f"* {doc.page_content} [{doc.metadata}]")
