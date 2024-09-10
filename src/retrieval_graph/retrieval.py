@@ -1,3 +1,16 @@
+"""Manage the configuration of various retrievers.
+
+This module provides functionality to create and manage retrievers for different
+vector store backends, specifically Elasticsearch, Pinecone, and Weaviate.
+
+Functions:
+    make_elastic_retriever: Context manager for creating an Elasticsearch retriever.
+    make_pinecone_retriever: Context manager for creating a Pinecone retriever.
+    make_retriever: Factory function to create a retriever based on configuration.
+
+The retrievers support filtering results by user_id to ensure data isolation between users.
+"""
+
 import os
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Generator
@@ -38,7 +51,6 @@ def make_pinecone_retriever(
     configuration: IndexConfiguration, embedding_model: Embeddings
 ) -> Generator[VectorStoreRetriever, None, None]:
     """Configure this agent to connect to a specific pinecone index."""
-
     from langchain_pinecone import PineconeVectorStore
 
     search_kwargs = configuration.search_kwargs
@@ -56,7 +68,6 @@ def make_weaviate_retriever(
     configuration: IndexConfiguration, embedding_model: Embeddings
 ) -> Generator[VectorStoreRetriever, None, None]:
     """Configure this agent to connect to a specific weaviate index."""
-
     import weaviate
     from langchain_weaviate import WeaviateVectorStore
     from weaviate.classes.query import Filter
@@ -82,6 +93,21 @@ def make_weaviate_retriever(
 
 
 @contextmanager
+def make_mongodb_retriver(
+    configuration: IndexConfiguration, embedding_model: Embeddings
+) -> Generator[VectorStoreRetriever, None, None]:
+    """Configure this agent to connect to a specific MongoDB Atlas index & namespaces."""
+    from langchain_mongodb.vectorstores import MongoDBAtlasVectorSearch
+
+    vstore = MongoDBAtlasVectorSearch.from_connection_string(
+        os.environ["MONGODB_URI"],
+        namespace=f"langgraph_retrieval_agent.{configuration.user_id}",
+        embedding=embedding_model,
+    )
+    yield vstore.as_retriever()
+
+
+@contextmanager
 def make_retriever(
     config: RunnableConfig,
 ) -> Generator[VectorStoreRetriever, None, None]:
@@ -101,6 +127,11 @@ def make_retriever(
         case "weaviate":
             with make_weaviate_retriever(configuration, embedding_model) as retriever:
                 yield retriever
+
+        case "mongodb":
+            with make_mongodb_retriver(configuration, embedding_model) as retriever:
+                yield retriever
+
         case _:
             raise ValueError(
                 "Unrecognized retriever_provider in configuration. "

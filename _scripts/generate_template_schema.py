@@ -1,9 +1,11 @@
+"""Generate the schema."""
+
 # This would belong in the langgraph-api actually
 import importlib
 import json
 from dataclasses import dataclass, fields
 from pathlib import Path
-from typing import Callable, Literal, get_args, get_origin
+from typing import Any, Callable, Literal, get_args, get_origin
 
 import msgspec
 from langgraph.graph.state import CompiledGraph
@@ -80,6 +82,22 @@ _CANDIDATES = {"llm": _LLMS, "retriever": _RETRIEVERS, "embedding": _EMBEDDINGS}
 
 
 def get_enhanced_schema(graph: CompiledGraph) -> dict:
+    """Get an enhanced schema for the graph configuration.
+
+    This function takes a CompiledGraph object and returns an enhanced JSON schema
+    for its configuration. The enhancement includes adding options for fields
+    with specific kinds (llm, retriever, embedding) based on predefined candidates
+    and custom matchers.
+
+    Args:
+        graph (CompiledGraph): The compiled graph object to generate the schema for.
+
+    Returns:
+        dict: An enhanced JSON schema for the graph configuration.
+
+    Raises:
+        ValueError: If an unsupported studio schema kind is encountered.
+    """
     config_schema: dataclass = graph.config_type
     fields_ = fields(config_schema)
     schema_name = config_schema.__name__
@@ -115,8 +133,28 @@ def get_enhanced_schema(graph: CompiledGraph) -> dict:
     return schema
 
 
-def import_spec(path: str, root_path: Path):
-    """Load object from path like path/to/file.py:object_variable_name"""
+def import_spec(path: str, root_path: Path) -> Any:
+    """Load and return an object from a specified Python file.
+
+    This function imports a Python module from a given file path and returns a specific object from that module.
+
+    Args:
+        path (str): A string in the format "path/to/file.py:object_variable_name",
+                    where the part before the colon is the relative path to the Python file,
+                    and the part after the colon is the name of the object to be imported from that file.
+        root_path (Path): The root directory path to use as a reference for the relative module path.
+
+    Returns:
+        Any: The imported object from the specified module.
+
+    Raises:
+        ImportError: If the module or object cannot be imported.
+        AttributeError: If the specified object does not exist in the module.
+
+    Example:
+        >>> import_spec("models/my_model.py:MyClass", Path("/project"))
+        <class 'models.my_model.MyClass'>
+    """
     module_path, object_name = path.split(":")
     config_dir = root_path.parent
     full_module_path = config_dir / module_path
@@ -126,7 +164,27 @@ def import_spec(path: str, root_path: Path):
     return getattr(module, object_name)
 
 
-def get_schemas_for_config(langgraph_json: dict, root_path: Path):
+def get_schemas_for_config(langgraph_json: dict, root_path: Path) -> dict:
+    """Generate enhanced schemas for each graph specified in the langgraph JSON configuration.
+
+    This function iterates through the graphs defined in the langgraph JSON,
+    imports the compiled graph object for each, and generates an enhanced schema
+    for it using the get_enhanced_schema function.
+
+    Args:
+        langgraph_json (dict): A dictionary containing the langgraph configuration,
+                               with a 'graphs' key mapping graph names to their paths.
+        root_path (Path): The root path used for resolving relative paths in the configuration.
+
+    Returns:
+        dict: A dictionary mapping graph names to their enhanced schemas.
+
+    Example:
+        >>> config = {"graphs": {"main": "path/to/main_graph.py:graph"}}
+        >>> schemas = get_schemas_for_config(config, Path("/project"))
+        >>> print(schemas.keys())
+        dict_keys(['main'])
+    """
     results = {}
     for graph_name, path in langgraph_json["graphs"].items():
         compiled = import_spec(path, root_path)
@@ -135,13 +193,29 @@ def get_schemas_for_config(langgraph_json: dict, root_path: Path):
 
 
 def process_template(config_path: str):
+    """Process the langgraph.json template file and generate a corresponding langgraph.template.json file.
+
+    This function reads the langgraph.json file, extracts the configuration schemas,
+    and writes them to a new langgraph.template.json file in the same directory.
+
+    Args:
+        config_path (str): The path to the langgraph.json file.
+
+    Raises:
+        AssertionError: If the input file is not named 'langgraph.json'.
+
+    Side effects:
+        - Creates or overwrites a 'langgraph.template.json' file in the same directory as the input file.
+    """
     path = Path(config_path).absolute()
-    assert path.name == "langgraph.json"
+    assert path.name == "langgraph.json", "Input file must be named 'langgraph.json'"
     output_path = path.parent / "langgraph.template.json"
+
     with path.open("r") as f:
         config = json.load(f)
 
     schemas = get_schemas_for_config(config, path)
+
     with output_path.open("w") as f:
         json.dump({"config_schemas": schemas}, f, indent=2)
 

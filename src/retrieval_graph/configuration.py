@@ -13,6 +13,7 @@ from typing_extensions import Annotated
 
 
 def accept_all(_: Any) -> bool:
+    """Accept any value."""
     return True
 
 
@@ -21,6 +22,7 @@ def StudioSpec(
     kind: Optional[Literal["llm", "embedding", "retriever"]],
     matcher: Optional[Callable[[Any], bool]] = None,
 ) -> Meta:
+    """Metadata for the schema."""
     extra_schema = {"__lg_studio_meta": {"kind": kind}}
     extra = {"matcher": matcher or accept_all}
     return Meta(extra_json_schema=extra_schema, extra=extra)
@@ -39,21 +41,44 @@ def _valid_embeddings(name: str | Any) -> bool:
 
 @dataclass(kw_only=True)
 class IndexConfiguration:
+    """Configuration class for indexing and retrieval operations.
+
+    This class defines the parameters needed for configuring the indexing and
+    retrieval processes, including user identification, embedding model selection,
+    retriever provider choice, and search parameters.
+    """
+
     user_id: str
+    """Unique identifier for the user."""
+
     embedding_model_name: Annotated[
         str,
         StudioSpec(kind="embedding", matcher=_valid_embeddings),
     ] = "text-embedding-3-small"
+    """Name of the embedding model to use. Must be a valid embedding model name."""
+
     retriever_provider: Annotated[
-        Literal["elastic", "pinecone", "weaviate"],
+        Literal["elastic", "pinecone", "mongodb", "weaviate"],
         StudioSpec(kind="retriever"),
     ] = "elastic"
+    """The vector store provider to use for retrieval. Options are 'elastic', 'pinecone', or 'weaviate'."""
+
     search_kwargs: dict[str, Any] = field(default_factory=dict)
+    """Additional keyword arguments to pass to the search function of the retriever."""
 
     @classmethod
     def from_runnable_config(
         cls: Type[T], config: Optional[RunnableConfig] = None
     ) -> T:
+        """Create an IndexConfiguration instance from a RunnableConfig object.
+
+        Args:
+            cls (Type[T]): The class itself.
+            config (Optional[RunnableConfig]): The configuration object to use.
+
+        Returns:
+            T: An instance of IndexConfiguration with the specified configuration.
+        """
         config = ensure_config(config)
         configurable = config.get("configurable") or {}
         _fields = {f.name for f in fields(cls) if f.init}
