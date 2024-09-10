@@ -44,7 +44,7 @@ class IndexConfiguration:
         StudioSpec(kind="embedding", matcher=_valid_embeddings),
     ] = "text-embedding-3-small"
     retriever_provider: Annotated[
-        Literal["elastic", "pinecone"],
+        Literal["elastic", "pinecone", "weaviate"],
         StudioSpec(kind="retriever"),
     ] = "elastic"
     search_kwargs: dict = field(default_factory=dict)
