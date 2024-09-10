@@ -40,16 +40,22 @@ def _valid_embeddings(name: str | Any) -> bool:
 
 
 @dataclass(kw_only=True)
-class IndexConfiguration:
+class DefaultConfiguration:
+    """This is automatically populated by langgraph."""
+
+    thread_id: str
+    graph_id: str
+    assistant_id: str
+
+
+@dataclass(kw_only=True)
+class IndexConfiguration(DefaultConfiguration):
     """Configuration class for indexing and retrieval operations.
 
     This class defines the parameters needed for configuring the indexing and
     retrieval processes, including user identification, embedding model selection,
     retriever provider choice, and search parameters.
     """
-
-    user_id: str
-    """Unique identifier for the user."""
 
     embedding_model_name: Annotated[
         str,
@@ -92,7 +98,6 @@ T = TypeVar("T", bound=IndexConfiguration)
 class Configuration(IndexConfiguration):
     """The configuration for the agent."""
 
-    thread_id: str
     response_system_prompt: str = """You are a helpful AI assistant. Answer the user's questions based on the retrieved documents.
 
 {retrieved_docs}"

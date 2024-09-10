@@ -84,7 +84,7 @@ class IndexState:
     these documents.
     """
 
-    docs: Annotated[Sequence[Document], reduce_docs]
+    docs: Annotated[Sequence[Document], reduce_docs] = field(default_factory=list)
     """A list of documents that the agent can index."""
 
     retriever: Annotated[VectorStoreRetriever, Context(retrieval.make_retriever)]
@@ -110,7 +110,9 @@ class InputState:
     to the outside world compared to what is maintained internally.
     """
 
-    messages: Annotated[Sequence[AnyMessage], add_messages]
+    messages: Annotated[Sequence[AnyMessage], add_messages] = field(
+        default_factory=list
+    )
     """Messages track the primary execution state of the agent.
 
     Typically accumulates a pattern of Human/AI/Human/AI messages; if
@@ -164,7 +166,7 @@ class State(InputState):
     queries: Annotated[list[str], add_queries] = field(default_factory=list)
     """A list of search queries that the agent has generated."""
 
-    retrieved_docs: list[Document]
+    retrieved_docs: list[Document] = field(default_factory=list)
     """Populated by the retriever. This is a list of documents that the agent can reference."""
 
     retriever: Annotated[VectorStoreRetriever, Context(retrieval.make_retriever)]

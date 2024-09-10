@@ -13,16 +13,14 @@ The retrievers support filtering results by user_id to ensure data isolation bet
 
 import os
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Generator
+from typing import Generator
 
 from langchain_core.embeddings import Embeddings
 from langchain_core.runnables import RunnableConfig
+from langchain_core.vectorstores import VectorStoreRetriever
 from langchain_openai import OpenAIEmbeddings
 
 from retrieval_graph.configuration import Configuration, IndexConfiguration
-
-if TYPE_CHECKING:
-    from langchain_core.vectorstores import VectorStoreRetriever
 
 
 @contextmanager
@@ -42,7 +40,9 @@ def make_elastic_retriever(
     search_kwargs = configuration.search_kwargs
 
     search_filter = search_kwargs.setdefault("filter", [])
-    search_filter.append({"term": {"metadata.user_id": configuration.user_id}})
+    search_filter.append(
+        {"term": {"metadata.assistant_id": configuration.assistant_id}}
+    )
     yield vstore.as_retriever(search_kwargs=search_kwargs)
 
 
@@ -56,7 +56,7 @@ def make_pinecone_retriever(
     search_kwargs = configuration.search_kwargs
 
     search_filter = search_kwargs.setdefault("filter", {})
-    search_filter.update({"user_id": configuration.user_id})
+    search_filter.update({"user_id": configuration.assistant_id})
     vstore = PineconeVectorStore.from_existing_index(
         os.environ["PINECONE_INDEX_NAME"], embedding=embedding_model
     )
@@ -74,7 +74,9 @@ def make_weaviate_retriever(
 
     search_kwargs = configuration.search_kwargs
     search_filters = search_kwargs.setdefault("filters", [])
-    search_filters.extend(Filter.by_property("user_id").equal(configuration.user_id))
+    search_filters.extend(
+        Filter.by_property("user_id").equal(configuration.assistant_id)
+    )
     weaviate_client = weaviate.connect_to_wcs(
         cluster_url=os.environ["WEAVIATE_URL"],
         auth_credentials=weaviate.classes.init.Auth.api_key(
@@ -101,7 +103,7 @@ def make_mongodb_retriver(
 
     vstore = MongoDBAtlasVectorSearch.from_connection_string(
         os.environ["MONGODB_URI"],
-        namespace=f"langgraph_retrieval_agent.{configuration.user_id}",
+        namespace=f"langgraph_retrieval_agent.{configuration.assistant_id}",
         embedding=embedding_model,
     )
     yield vstore.as_retriever()
@@ -114,7 +116,7 @@ def make_retriever(
     """Create a retriever for the agent, based on the current configuration."""
     configuration = IndexConfiguration.from_runnable_config(config)
     embedding_model = OpenAIEmbeddings(model=configuration.embedding_model_name)
-    user_id = configuration.user_id
+    user_id = configuration.assistant_id
     if not user_id:
         raise ValueError("Please provide a valid user_id in the configuration.")
     match configuration.retriever_provider:
