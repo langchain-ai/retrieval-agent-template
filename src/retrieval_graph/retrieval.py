@@ -13,16 +13,14 @@ The retrievers support filtering results by user_id to ensure data isolation bet
 
 import os
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Generator
+from typing import Generator
 
 from langchain_core.embeddings import Embeddings
 from langchain_core.runnables import RunnableConfig
+from langchain_core.vectorstores import VectorStoreRetriever
 from langchain_openai import OpenAIEmbeddings
 
 from retrieval_graph.configuration import Configuration, IndexConfiguration
-
-if TYPE_CHECKING:
-    from langchain_core.vectorstores import VectorStoreRetriever
 
 
 @contextmanager
