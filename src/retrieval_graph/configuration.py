@@ -18,7 +18,7 @@ def accept_all(_):
 def StudioSpec(
     *,
     kind: Optional[Literal["llm", "embedding", "retriever"]],
-    matcher: Callable[[Any], bool] = None,
+    matcher: Optional[Callable[[Any], bool]] = None,
 ):
     extra_schema = {"__lg_studio_meta": {"kind": kind}}
     extra = {"matcher": matcher or accept_all}
@@ -28,7 +28,7 @@ def StudioSpec(
 # Below would live in the template repo.
 
 
-def _valid_embeddings(name: str | Any) -> str:
+def _valid_embeddings(name: str | Any) -> bool:
     if not isinstance(name, str):
         return False
     if name.startswith("text-embedding"):

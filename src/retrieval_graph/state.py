@@ -8,7 +8,7 @@ from langgraph.channels.context import Context
 from langgraph.graph import add_messages
 from typing_extensions import Annotated, TypedDict
 
-from langgraph.templates.retrieval_graph import retrieval
+from retrieval_graph import retrieval
 
 ############################  Doc Indexing State  #############################
 

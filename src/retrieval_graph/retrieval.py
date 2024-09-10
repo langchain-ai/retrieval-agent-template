@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from langchain_core.embeddings import Embeddings
 from langchain_core.runnables import RunnableConfig
 from langchain_openai import OpenAIEmbeddings
-from langgraph.templates.retrieval_graph.configuration import (
+from retrieval_graph.configuration import (
     Configuration,
     IndexConfiguration,
 )

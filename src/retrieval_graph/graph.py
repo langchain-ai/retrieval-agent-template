@@ -11,9 +11,9 @@ from langchain_core.pydantic_v1 import BaseModel
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph
 
-from langgraph.templates.retrieval_graph.configuration import Configuration
-from langgraph.templates.retrieval_graph.state import InputState, State
-from langgraph.templates.retrieval_graph.utils import format_docs, get_message_text
+from retrieval_graph.configuration import Configuration
+from retrieval_graph.state import InputState, State
+from retrieval_graph.utils import format_docs, get_message_text
 
 # Define the function that calls the model
 

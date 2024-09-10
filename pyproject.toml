@@ -29,8 +29,14 @@ requires = ["setuptools>=73.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-package-dir = { "langgraph.templates.retrieval_graph" = "src/retrieval_graph" }
-packages = ["langgraph.templates.retrieval_graph"]
+packages = ["langgraph.templates.retrieval_graph", "retrieval_graph"]
+[tool.setuptools.package-dir]
+"langgraph.templates.retrieval_graph" = "src/retrieval_graph"
+"retrieval_graph" = "src/retrieval_graph"
+
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
+
+[tool.uv]
+dev-dependencies = ["black>=24.8.0", "mypy>=0.6.4", "ruff"]
