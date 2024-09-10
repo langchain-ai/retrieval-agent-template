@@ -6,8 +6,8 @@ from langchain_core.documents import Document
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph
 
-from retrieval_graph.configuration import IndexConfiguration
-from retrieval_graph.state import IndexState
+from langgraph.templates.retrieval_graph.configuration import IndexConfiguration
+from langgraph.templates.retrieval_graph.state import IndexState
 
 
 def ensure_docs_have_user_id(docs: Sequence[Document], config: RunnableConfig):

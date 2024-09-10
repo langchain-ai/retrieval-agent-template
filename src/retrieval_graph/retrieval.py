@@ -4,7 +4,10 @@ from contextlib import contextmanager
 from langchain_core.embeddings import Embeddings
 from langchain_core.runnables import RunnableConfig
 from langchain_openai import OpenAIEmbeddings
-from retrieval_graph.configuration import Configuration, IndexConfiguration
+from langgraph.templates.retrieval_graph.configuration import (
+    Configuration,
+    IndexConfiguration,
+)
 
 
 @contextmanager
@@ -34,8 +37,8 @@ def make_pinecone_retriever(configuration: Configuration, embedding_model: Embed
 
     search_kwargs = configuration.search_kwargs
 
-    search_filter = search_kwargs.setdefault("filter", [])
-    search_filter.append({"user_id": configuration.user_id})
+    search_filter = search_kwargs.setdefault("filter", {})
+    search_filter.update({"user_id": configuration.user_id})
     vstore = PineconeVectorStore.from_existing_index(
         os.environ["PINECONE_INDEX_NAME"], embedding=embedding_model
     )
@@ -94,3 +97,19 @@ def make_retriever(config: RunnableConfig):
                 f"Expected one of: {', '.join(Configuration.__annotations__['retriever_provider'].__args__)}\n"
                 f"Got: {configuration.retriever_provider}"
             )
+
+
+if __name__ == "__main__":
+    import time
+    import os
+    from pinecone import Pinecone, ServerlessSpec
+    from langchain_pinecone import PineconeVectorStore
+    from langchain_openai import OpenAIEmbeddings
+
+    pc = Pinecone(api_key="81f0d6bf-0032-4871-a773-99a349de1d33")
+
+    index = pc.Index("someproj")
+    vector_store = PineconeVectorStore(index=index, embedding=OpenAIEmbeddings())
+    results = vector_store.similarity_search(query="thud", k=1, filter={"bar": "baz"})
+    for doc in results:
+        print(f"* {doc.page_content} [{doc.metadata}]")
