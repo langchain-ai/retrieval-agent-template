@@ -55,9 +55,25 @@ def make_retriever(config: RunnableConfig):
         raise ValueError("Please provide a valid user_id in the configuration.")
     data_path = Path("data", user_id, "retriever.json")
     data_path.parent.mkdir(parents=True, exist_ok=True)
+
+    connection_options = {}
+    if os.environ.get("ELASTICSEARCH_API_KEY") and os.environ.get("ELASTICSEARCH_URL"):
+        connection_options = {"es_api_key": os.environ["ELASTICSEARCH_API_KEY"]}
+    elif os.environ.get("ELASTICSEARCH_USER") and os.environ.get(
+        "ELASTICSEARCH_PASSWORD"
+    ):
+        connection_options = {
+            "es_user": os.environ["ELASTICSEARCH_USER"],
+            "es_password": os.environ["ELASTICSEARCH_PASSWORD"],
+        }
+    else:
+        raise ValueError(
+            "Please provide a valid API key or user/password for Elasticsearch."
+        )
+
     vstore = ElasticsearchStore(
+        **connection_options,  # type: ignore
         es_url=os.environ["ELASTICSEARCH_URL"],
-        es_api_key=os.environ["ELASTICSEARCH_API_KEY"],
         index_name="langchain_index",
         embedding=embedding_model,
     )
