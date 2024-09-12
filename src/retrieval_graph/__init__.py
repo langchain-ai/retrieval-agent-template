@@ -15,7 +15,7 @@ allowing for flexibility in model selection, retrieval methods, and system promp
 
 Key Features:
 - Adaptive query generation for improved document retrieval
-- Integration with various retrieval providers (e.g., Elastic, Pinecone, Weaviate)
+- Integration with various retrieval providers (e.g., Elastic, Pinecone, MongoDB)
 - Customizable language models for query and response generation
 - Stateful conversation management for context-aware interactions
 

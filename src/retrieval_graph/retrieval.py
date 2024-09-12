@@ -1,12 +1,7 @@
 """Manage the configuration of various retrievers.
 
 This module provides functionality to create and manage retrievers for different
-vector store backends, specifically Elasticsearch, Pinecone, and Weaviate.
-
-Functions:
-    make_elastic_retriever: Context manager for creating an Elasticsearch retriever.
-    make_pinecone_retriever: Context manager for creating a Pinecone retriever.
-    make_retriever: Factory function to create a retriever based on configuration.
+vector store backends, specifically Elasticsearch, Pinecone, and MongoDB.
 
 The retrievers support filtering results by user_id to ensure data isolation between users.
 """
@@ -30,9 +25,24 @@ def make_elastic_retriever(
     """Configure this agent to connect to a specific elastic index."""
     from langchain_elasticsearch import ElasticsearchStore
 
+    connection_options = {}
+    if os.environ.get("ELASTICSEARCH_API_KEY") and os.environ.get("ELASTICSEARCH_URL"):
+        connection_options = {"es_api_key": os.environ["ELASTICSEARCH_API_KEY"]}
+    elif os.environ.get("ELASTICSEARCH_USER") and os.environ.get(
+        "ELASTICSEARCH_PASSWORD"
+    ):
+        connection_options = {
+            "es_user": os.environ["ELASTICSEARCH_USER"],
+            "es_password": os.environ["ELASTICSEARCH_PASSWORD"],
+        }
+    else:
+        raise ValueError(
+            "Please provide a valid API key or user/password for Elasticsearch."
+        )
+
     vstore = ElasticsearchStore(
+        **connection_options,  # type: ignore
         es_url=os.environ["ELASTICSEARCH_URL"],
-        es_api_key=os.environ["ELASTICSEARCH_API_KEY"],
         index_name="langchain_index",
         embedding=embedding_model,
     )
@@ -57,35 +67,6 @@ def make_pinecone_retriever(
     search_filter.update({"user_id": configuration.user_id})
     vstore = PineconeVectorStore.from_existing_index(
         os.environ["PINECONE_INDEX_NAME"], embedding=embedding_model
-    )
-    yield vstore.as_retriever(search_kwargs=search_kwargs)
-
-
-@contextmanager
-def make_weaviate_retriever(
-    configuration: IndexConfiguration, embedding_model: Embeddings
-) -> Generator[VectorStoreRetriever, None, None]:
-    """Configure this agent to connect to a specific weaviate index."""
-    import weaviate
-    from langchain_weaviate import WeaviateVectorStore
-    from weaviate.classes.query import Filter
-
-    search_kwargs = configuration.search_kwargs
-    search_filters = search_kwargs.setdefault("filters", [])
-    search_filters.extend(Filter.by_property("user_id").equal(configuration.user_id))
-    weaviate_client = weaviate.connect_to_wcs(
-        cluster_url=os.environ["WEAVIATE_URL"],
-        auth_credentials=weaviate.classes.init.Auth.api_key(
-            os.environ["WEAVIATE_API_KEY"]
-        ),
-        skip_init_checks=True,
-    )
-    vstore = WeaviateVectorStore(
-        client=weaviate_client,
-        index_name=os.environ["WEAVIATE_INDEX_NAME"],
-        text_key="text",
-        embedding=embedding_model,
-        attributes=["source", "title"],
     )
     yield vstore.as_retriever(search_kwargs=search_kwargs)
 
@@ -121,9 +102,6 @@ def make_retriever(
                 yield retriever
         case "pinecone":
             with make_pinecone_retriever(configuration, embedding_model) as retriever:
-                yield retriever
-        case "weaviate":
-            with make_weaviate_retriever(configuration, embedding_model) as retriever:
                 yield retriever
 
         case "mongodb":

@@ -7,11 +7,6 @@ from typing import Annotated, Any, Literal, Optional, Type, TypeVar
 
 from langchain_core.runnables import RunnableConfig, ensure_config
 
-# This will live in another package I think
-
-
-# Below would live in the template repo.
-
 
 @dataclass(kw_only=True)
 class IndexConfiguration:
@@ -27,16 +22,17 @@ class IndexConfiguration:
 
     embedding_model_name: Annotated[
         str,
-        lambda x: "foo",
+        # This metadata is only used for the template registry.
+        # You may remove in your own code
         {"__template_metadata__": {"kind": "embeddings"}},
     ] = "text-embedding-3-small"
     """Name of the embedding model to use. Must be a valid embedding model name."""
 
     retriever_provider: Annotated[
-        Literal["elastic", "pinecone", "mongodb", "weaviate"],
+        Literal["elastic", "pinecone", "mongodb"],
         {"__template_metadata__": {"kind": "retriever"}},
     ] = "elastic"
-    """The vector store provider to use for retrieval. Options are 'elastic', 'pinecone', or 'weaviate'."""
+    """The vector store provider to use for retrieval. Options are 'elastic', 'pinecone', or 'mongodb'."""
 
     search_kwargs: dict[str, Any] = field(default_factory=dict)
     """Additional keyword arguments to pass to the search function of the retriever."""
