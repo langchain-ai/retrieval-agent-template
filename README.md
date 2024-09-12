@@ -1,3 +1,15 @@
+<!--
+Configuration generated from `langgraph template lock`
+
+{
+  "config_schemas": {
+    "graph_name": {
+      "environment": ["ANTHROPIC_API_KEY", "FIREWORKS_API_KEY", "OPENAI_API_KEY", "ELASTICSEARCH_CLOUD_ID", "ELASTICSEARCH_API_KEY"]
+    }
+  }
+}
+-->
+
 # LangGraph Retrieval Agent Template
 
 This LangGraph template implements a simple, extensible agent that answers questions based on a retriever.
