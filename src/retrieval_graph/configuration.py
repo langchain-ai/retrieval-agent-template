@@ -3,40 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, fields
-from typing import Any, Callable, Literal, Optional, Type, TypeVar
+from typing import Annotated, Any, Literal, Optional, Type, TypeVar
 
 from langchain_core.runnables import RunnableConfig, ensure_config
 
 # This will live in another package I think
-from msgspec import Meta
-from typing_extensions import Annotated
-
-
-def accept_all(_: Any) -> bool:
-    """Accept any value."""
-    return True
-
-
-def StudioSpec(
-    *,
-    kind: Optional[Literal["llm", "embedding", "retriever"]],
-    matcher: Optional[Callable[[Any], bool]] = None,
-) -> Meta:
-    """Metadata for the schema."""
-    extra_schema = {"__lg_studio_meta": {"kind": kind}}
-    extra = {"matcher": matcher or accept_all}
-    return Meta(extra_json_schema=extra_schema, extra=extra)
 
 
 # Below would live in the template repo.
-
-
-def _valid_embeddings(name: str | Any) -> bool:
-    if not isinstance(name, str):
-        return False
-    if name.startswith("text-embedding"):
-        return True
-    return False
 
 
 @dataclass(kw_only=True)
@@ -53,13 +27,14 @@ class IndexConfiguration:
 
     embedding_model_name: Annotated[
         str,
-        StudioSpec(kind="embedding", matcher=_valid_embeddings),
+        lambda x: "foo",
+        {"__template_metadata__": {"kind": "embeddings"}},
     ] = "text-embedding-3-small"
     """Name of the embedding model to use. Must be a valid embedding model name."""
 
     retriever_provider: Annotated[
         Literal["elastic", "pinecone", "mongodb", "weaviate"],
-        StudioSpec(kind="retriever"),
+        {"__template_metadata__": {"kind": "retriever"}},
     ] = "elastic"
     """The vector store provider to use for retrieval. Options are 'elastic', 'pinecone', or 'weaviate'."""
 
@@ -98,7 +73,7 @@ class Configuration(IndexConfiguration):
 {retrieved_docs}"
 
 System time: {system_time}"""
-    response_model_name: Annotated[str, StudioSpec(kind="llm")] = (
+    response_model_name: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = (
         "claude-3-5-sonnet-20240620"
     )
     query_system_prompt: str = """Generate search queries to retrieve documents that may help answer the user's question. Previously, you made the following queries:
@@ -108,4 +83,6 @@ System time: {system_time}"""
 </previous_queries>
 
 System time: {system_time}"""
-    query_model_name: Annotated[str, StudioSpec(kind="llm")] = "gpt-4o"
+    query_model_name: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = (
+        "gpt-4o"
+    )

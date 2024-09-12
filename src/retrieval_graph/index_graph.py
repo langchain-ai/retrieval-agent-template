@@ -6,6 +6,7 @@ from langchain_core.documents import Document
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph
 
+from retrieval_graph import retrieval
 from retrieval_graph.configuration import IndexConfiguration
 from retrieval_graph.state import IndexState
 
@@ -45,11 +46,10 @@ async def index_docs(
     """
     if not config:
         raise ValueError("Configuration required to run index_docs.")
-    docs = state.docs
-    retriever = state.retriever
-    stamped_docs = ensure_docs_have_user_id(docs, config)
+    with retrieval.make_retriever(config) as retriever:
+        stamped_docs = ensure_docs_have_user_id(state.docs, config)
 
-    await retriever.aadd_documents(stamped_docs)
+        await retriever.aadd_documents(stamped_docs)
     return {"docs": "delete"}
 
 

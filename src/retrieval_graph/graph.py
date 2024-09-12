@@ -17,6 +17,7 @@ from langchain_core.pydantic_v1 import BaseModel
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph
 
+from retrieval_graph import retrieval
 from retrieval_graph.configuration import Configuration
 from retrieval_graph.state import InputState, State
 from retrieval_graph.utils import format_docs, get_message_text
@@ -31,7 +32,7 @@ class SearchQuery(BaseModel):
 
 
 async def generate_query(
-    state: State, *, config: RunnableConfig | None = None
+    state: State, *, config: RunnableConfig
 ) -> dict[str, list[str]]:
     """Generate a search query based on the current state and configuration.
 
@@ -84,7 +85,7 @@ async def generate_query(
 
 
 async def retrieve(
-    state: State, *, config: RunnableConfig | None = None
+    state: State, *, config: RunnableConfig
 ) -> dict[str, list[Document]]:
     """Retrieve documents based on the latest query in the state.
 
@@ -100,13 +101,13 @@ async def retrieve(
         dict[str, list[Document]]: A dictionary with a single key "retrieved_docs"
         containing a list of retrieved Document objects.
     """
-    retriever = state.retriever
-    response = await retriever.ainvoke(state.queries[-1], config)
-    return {"retrieved_docs": response}
+    with retrieval.make_retriever(config) as retriever:
+        response = await retriever.ainvoke(state.queries[-1], config)
+        return {"retrieved_docs": response}
 
 
 async def respond(
-    state: State, *, config: RunnableConfig | None = None
+    state: State, *, config: RunnableConfig
 ) -> dict[str, list[BaseMessage]]:
     """Call the LLM powering our "agent"."""
     configuration = Configuration.from_runnable_config(config)

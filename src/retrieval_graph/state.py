@@ -25,11 +25,7 @@ from typing import Annotated, Any, Literal, Optional, Sequence, Union
 
 from langchain_core.documents import Document
 from langchain_core.messages import AnyMessage
-from langchain_core.vectorstores.base import VectorStoreRetriever
-from langgraph.channels.context import Context
 from langgraph.graph import add_messages
-
-from retrieval_graph import retrieval
 
 ############################  Doc Indexing State  #############################
 
@@ -86,12 +82,6 @@ class IndexState:
 
     docs: Annotated[Sequence[Document], reduce_docs]
     """A list of documents that the agent can index."""
-
-    retriever: Annotated[VectorStoreRetriever, Context(retrieval.make_retriever)]
-    """The retriever is managed by LangGraph "in context."
-    
-    Context state vars are not serialized. Instead, they are re-created
-    for each invocation of the graph."""
 
 
 #############################  Agent State  ###################################
@@ -166,11 +156,6 @@ class State(InputState):
 
     retrieved_docs: list[Document]
     """Populated by the retriever. This is a list of documents that the agent can reference."""
-
-    retriever: Annotated[VectorStoreRetriever, Context(retrieval.make_retriever)]
-    """The vector store retriever used for document retrieval.
-    
-    Managed by LangGraph. Connects to the configured search index."""
 
     # Feel free to add additional attributes to your state as needed.
     # Common examples include retrieved documents, extracted entities, API connections, etc.
