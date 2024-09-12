@@ -154,7 +154,7 @@ class State(InputState):
     queries: Annotated[list[str], add_queries] = field(default_factory=list)
     """A list of search queries that the agent has generated."""
 
-    retrieved_docs: list[Document]
+    retrieved_docs: list[Document] = field(default_factory=list)
     """Populated by the retriever. This is a list of documents that the agent can reference."""
 
     # Feel free to add additional attributes to your state as needed.

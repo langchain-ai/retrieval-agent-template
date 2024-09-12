@@ -29,7 +29,7 @@ class IndexConfiguration:
     """Name of the embedding model to use. Must be a valid embedding model name."""
 
     retriever_provider: Annotated[
-        Literal["elastic", "pinecone", "mongodb"],
+        Literal["elastic", "elastic-local", "pinecone", "mongodb"],
         {"__template_metadata__": {"kind": "retriever"}},
     ] = "elastic"
     """The vector store provider to use for retrieval. Options are 'elastic', 'pinecone', or 'mongodb'."""
@@ -69,9 +69,9 @@ class Configuration(IndexConfiguration):
 {retrieved_docs}"
 
 System time: {system_time}"""
-    response_model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = (
-        "anthropic/claude-3-5-sonnet-20240620"
-    )
+    response_model: Annotated[
+        str, {"__template_metadata__": {"kind": "llm"}}
+    ] = "anthropic/claude-3-5-sonnet-20240620"
     query_system_prompt: str = """Generate search queries to retrieve documents that may help answer the user's question. Previously, you made the following queries:
     
 <previous_queries/>
@@ -79,6 +79,6 @@ System time: {system_time}"""
 </previous_queries>
 
 System time: {system_time}"""
-    query_model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = (
-        "openai/gpt-4o-mini"
-    )
+    query_model: Annotated[
+        str, {"__template_metadata__": {"kind": "llm"}}
+    ] = "openai/gpt-4o-mini"

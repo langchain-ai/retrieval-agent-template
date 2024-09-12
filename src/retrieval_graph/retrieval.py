@@ -14,14 +14,12 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.runnables import RunnableConfig
 from langchain_core.vectorstores import VectorStoreRetriever
 
-
 from retrieval_graph.configuration import Configuration, IndexConfiguration
-
 
 ## Encoder constructors
 
 
-def make_text_encoder(model_name: str):
+def make_text_encoder(model_name: str) -> Embeddings:
     """Connect to the configured text encoder."""
     provider, model = model_name.split("/", maxsplit=1)
     match provider:
@@ -48,19 +46,14 @@ def make_elastic_retriever(
     from langchain_elasticsearch import ElasticsearchStore
 
     connection_options = {}
-    if os.environ.get("ELASTICSEARCH_API_KEY") and os.environ.get("ELASTICSEARCH_URL"):
-        connection_options = {"es_api_key": os.environ["ELASTICSEARCH_API_KEY"]}
-    elif os.environ.get("ELASTICSEARCH_USER") and os.environ.get(
-        "ELASTICSEARCH_PASSWORD"
-    ):
+    if configuration.retriever_provider == "elastic-local":
         connection_options = {
             "es_user": os.environ["ELASTICSEARCH_USER"],
             "es_password": os.environ["ELASTICSEARCH_PASSWORD"],
         }
+
     else:
-        raise ValueError(
-            "Please provide a valid API key or user/password for Elasticsearch."
-        )
+        connection_options = {"es_api_key": os.environ["ELASTICSEARCH_API_KEY"]}
 
     vstore = ElasticsearchStore(
         **connection_options,  # type: ignore
@@ -119,9 +112,10 @@ def make_retriever(
     if not user_id:
         raise ValueError("Please provide a valid user_id in the configuration.")
     match configuration.retriever_provider:
-        case "elastic":
+        case "elastic" | "elastic-local":
             with make_elastic_retriever(configuration, embedding_model) as retriever:
                 yield retriever
+
         case "pinecone":
             with make_pinecone_retriever(configuration, embedding_model) as retriever:
                 yield retriever

@@ -62,3 +62,4 @@ builder.add_edge("__start__", "index_docs")
 # Finally, we compile it!
 # This compiles it into a graph you can invoke and deploy.
 graph = builder.compile()
+graph.name = "IndexGraph"

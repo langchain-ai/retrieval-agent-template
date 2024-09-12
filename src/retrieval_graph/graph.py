@@ -9,7 +9,6 @@ relevant documents, and formulating responses.
 from datetime import datetime, timezone
 from typing import cast
 
-from langchain.chat_models import init_chat_model
 from langchain_core.documents import Document
 from langchain_core.messages import BaseMessage
 from langchain_core.prompts import ChatPromptTemplate
@@ -20,7 +19,7 @@ from langgraph.graph import StateGraph
 from retrieval_graph import retrieval
 from retrieval_graph.configuration import Configuration
 from retrieval_graph.state import InputState, State
-from retrieval_graph.utils import format_docs, get_message_text
+from retrieval_graph.utils import format_docs, get_message_text, load_chat_model
 
 # Define the function that calls the model
 
@@ -66,9 +65,9 @@ async def generate_query(
                 ("placeholder", "{messages}"),
             ]
         )
-        model = init_chat_model(
-            configuration.query_model
-        ).with_structured_output(SearchQuery)
+        model = load_chat_model(configuration.query_model).with_structured_output(
+            SearchQuery
+        )
 
         message_value = await prompt.ainvoke(
             {
@@ -118,7 +117,7 @@ async def respond(
             ("placeholder", "{messages}"),
         ]
     )
-    model = init_chat_model(configuration.response_model)
+    model = load_chat_model(configuration.response_model)
 
     retrieved_docs = format_docs(state.retrieved_docs)
     message_value = await prompt.ainvoke(
@@ -152,3 +151,4 @@ graph = builder.compile(
     interrupt_before=[],  # if you want to update the state before calling the tools
     interrupt_after=[],
 )
+graph.name = "RetrievalGraph"
