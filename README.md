@@ -6,7 +6,14 @@ This LangGraph template implements a simple, extensible agent that answers quest
 
 ## Project Prerequisites
 
-Assuming you've already [installed LangGraph Studio](https://github.com/langchain-ai/langgraph-studio/releases) and cloned this repo. All that's left is to create an index in Elastic (or your selected search provider) and have an API key for the configured LLM (by default Anthropic).
+Assuming you've already [installed LangGraph Studio](https://github.com/langchain-ai/langgraph-studio/releases) and cloned this repo.
+
+By default, this template uses:
+- OpenAI `text-embedding-3-small` model for embedding documents. Requires an OpenAI API key to be configured.
+- Anthropic `claude-3-5-sonnet` for generating responses. Requires an Anthropic API key to be configured.
+- Elasticsearch for retrieval and indexing on vectorised documents. 
+
+All that's left is to index documents into Elasticsearch through the indexer graph (or your selected search provider).
 
 Copy the [.env.example](.env.example) file. We will copy the relevant environment variables there:
 
