@@ -18,7 +18,14 @@ This LangGraph template implements a simple, extensible agent that answers quest
 
 ## Project Prerequisites
 
-Assuming you've already [installed LangGraph Studio](https://github.com/langchain-ai/langgraph-studio/releases) and cloned this repo. All that's left is to create an index in Elastic (or your selected search provider) and have an API key for the configured LLM (by default Anthropic).
+Assuming you've already [installed LangGraph Studio](https://github.com/langchain-ai/langgraph-studio/releases) and cloned this repo.
+
+By default, this template uses:
+- OpenAI `text-embedding-3-small` model for embedding documents. Requires an OpenAI API key to be configured.
+- Anthropic `claude-3-5-sonnet` for generating responses. Requires an Anthropic API key to be configured.
+- Elasticsearch for retrieval and indexing on vectorised documents. 
+
+All that's left is to index documents into Elasticsearch through the indexer graph (or your selected search provider).
 
 Copy the [.env.example](.env.example) file. We will copy the relevant environment variables there:
 
@@ -26,18 +33,42 @@ Copy the [.env.example](.env.example) file. We will copy the relevant environmen
 cp .env.example .env
 ```
 
-### Create Elastic index
+### Setup Elasticsearch
 
-Follow the [instructions here](https://python.langchain.com/v0.2/docs/integrations/vectorstores/elasticsearch/#elastic-cloud).
+You can setup a local Elasticsearch instance or use Elastic Cloud.
 
-1. Create an account and login to Elastic cloud: https://cloud.elastic.co/login.
-2. Create an index.
-3. Create an API key, and copy that to the URL and API key to your `.env` file created above:
+#### Locally with Docker
 
 ```
-# Important! Replace with your variables:
-ELASTICSEARCH_URL=https://abcd123455.us-west2.gcp.cloud.es.io:443
-ELASTICSEARCH_API_KEY=RY92dc7b9584c8400194955f1c173ca67492dc7b9584c8400194955f1c173ca674==
+docker run -p 127.0.0.1:9200:9200 -d --name elasticsearch --network elastic-net \
+  -e ELASTIC_PASSWORD=changeme \
+  -e "discovery.type=single-node" \
+  -e "xpack.security.http.ssl.enabled=false" \
+  -e "xpack.license.self_generated.type=trial" \
+  docker.elastic.co/elasticsearch/elasticsearch:8.15.1
+```
+
+See the [official Elastic documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/run-elasticsearch-locally.html) for more information on running it locally.
+
+Then use the `.env.example` to create an `.env` file with the following:
+
+```
+# As both Elasticsearch and LangGraph Studio runs in Docker, we need to use host.docker.internal to access.
+ELASTICSEARCH_URL=http://host.docker.internal:9200
+ELASTICSEARCH_USER=elastic
+ELASTICSEARCH_PASSWORD=changeme
+```
+
+#### On Elastic Cloud
+
+1. Signup for a free trial with [Elastic Cloud](https://cloud.elastic.co/registration?onboarding_token=search&cta=cloud-registration&tech=trial&plcmt=article%20content&pg=langchain).
+2. Get the Elasticsearch URL, found under Applications of your deployment.
+3. Create an API key. See the [official elastic documentation](https://www.elastic.co/search-labs/tutorials/install-elasticsearch/elastic-cloud#creating-an-api-key) for more information.
+4. Copy the URL and API key to your `.env` file created above:
+
+```
+ELASTICSEARCH_URL=<ES_URL>
+ELASTICSEARCH_API_KEY=<API_KEY>
 ```
 
 Once you've set this up, you can open this template in LangGraph studio.
