@@ -7,16 +7,16 @@ all: help
 TEST_FILE ?= tests/unit_tests/
 
 test:
-	poetry run pytest $(TEST_FILE)
+	python -m pytest $(TEST_FILE)
 
 test_watch:
-	poetry run ptw --snapshot-update --now . -- -vv tests/unit_tests
+	python -m ptw --snapshot-update --now . -- -vv tests/unit_tests
 
 test_profile:
-	poetry run pytest -vv tests/unit_tests/ --profile-svg
+	python -m pytest -vv tests/unit_tests/ --profile-svg
 
 extended_tests:
-	poetry run pytest --only-extended $(TEST_FILE)
+	python -m pytest --only-extended $(TEST_FILE)
 
 
 ######################
@@ -24,30 +24,30 @@ extended_tests:
 ######################
 
 # Define a variable for Python and notebook files.
-PYTHON_FILES=.
+PYTHON_FILES=src/
 MYPY_CACHE=.mypy_cache
 lint format: PYTHON_FILES=.
 lint_diff format_diff: PYTHON_FILES=$(shell git diff --name-only --diff-filter=d main | grep -E '\.py$$|\.ipynb$$')
-lint_package: PYTHON_FILES=retrieval_graph
+lint_package: PYTHON_FILES=src
 lint_tests: PYTHON_FILES=tests
 lint_tests: MYPY_CACHE=.mypy_cache_test
 
 lint lint_diff lint_package lint_tests:
-	poetry run ruff check .
-	[ "$(PYTHON_FILES)" = "" ] || poetry run ruff format $(PYTHON_FILES) --diff
-	[ "$(PYTHON_FILES)" = "" ] || poetry run ruff check --select I $(PYTHON_FILES)
-	[ "$(PYTHON_FILES)" = "" ] || poetry run mypy $(PYTHON_FILES)
-	[ "$(PYTHON_FILES)" = "" ] || mkdir -p $(MYPY_CACHE) && poetry run mypy $(PYTHON_FILES) --cache-dir $(MYPY_CACHE)
+	python -m ruff check .
+	[ "$(PYTHON_FILES)" = "" ] || python -m ruff format $(PYTHON_FILES) --diff
+	[ "$(PYTHON_FILES)" = "" ] || python -m ruff check --select I $(PYTHON_FILES)
+	[ "$(PYTHON_FILES)" = "" ] || python -m mypy --strict $(PYTHON_FILES)
+	[ "$(PYTHON_FILES)" = "" ] || mkdir -p $(MYPY_CACHE) && python -m mypy --strict $(PYTHON_FILES) --cache-dir $(MYPY_CACHE)
 
 format format_diff:
-	poetry run ruff format $(PYTHON_FILES)
-	poetry run ruff check --select I --fix $(PYTHON_FILES)
+	ruff format $(PYTHON_FILES)
+	ruff check --select I --fix $(PYTHON_FILES)
 
 spell_check:
-	poetry run codespell --toml pyproject.toml
+	codespell --toml pyproject.toml
 
 spell_fix:
-	poetry run codespell --toml pyproject.toml -w
+	codespell --toml pyproject.toml -w
 
 ######################
 # HELP
