@@ -42,7 +42,7 @@ ELASTICSEARCH_PASSWORD=changeme
 
 #### On Elastic Cloud
 
-1. Create an account and login to Elastic cloud: https://cloud.elastic.co/login.
+1. Signup for a free trial with [Elastic Cloud](https://cloud.elastic.co/registration?onboarding_token=search&cta=cloud-registration&tech=trial&plcmt=article%20content&pg=langchain).
 2. Get the Elasticsearch URL, found under Applications of your deployment.
 3. Create an API key. See the [official elastic documentation](https://www.elastic.co/search-labs/tutorials/install-elasticsearch/elastic-cloud#creating-an-api-key) for more information.
 4. Copy the URL and API key to your `.env` file created above:
