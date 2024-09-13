@@ -1,5 +1,8 @@
 # LangGraph Retrieval Agent Template
 
+[![CI](https://github.com/langchain-ai/retrieval-agent-template/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/langchain-ai/retrieval-agent-template/actions/workflows/unit-tests.yml)
+[![Integration Tests](https://github.com/langchain-ai/retrieval-agent-template/actions/workflows/integration-tests.yml/badge.svg)](https://github.com/langchain-ai/retrieval-agent-template/actions/workflows/integration-tests.yml)
+
 This LangGraph template implements a simple, extensible agent that answers questions based on a retriever.
 
 ![Graph view in LangGraph studio UI](./static/studio_ui.png)
@@ -9,9 +12,10 @@ This LangGraph template implements a simple, extensible agent that answers quest
 Assuming you've already [installed LangGraph Studio](https://github.com/langchain-ai/langgraph-studio/releases) and cloned this repo.
 
 By default, this template uses:
+
 - OpenAI `text-embedding-3-small` model for embedding documents. Requires an OpenAI API key to be configured.
 - Anthropic `claude-3-5-sonnet` for generating responses. Requires an Anthropic API key to be configured.
-- Elasticsearch for retrieval and indexing on vectorised documents. 
+- Elasticsearch for retrieval and indexing on vectorised documents.
 
 All that's left is to index documents into Elasticsearch through the indexer graph (or your selected search provider).
 

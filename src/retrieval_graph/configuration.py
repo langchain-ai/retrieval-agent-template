@@ -65,12 +65,18 @@ T = TypeVar("T", bound=IndexConfiguration)
 class Configuration(IndexConfiguration):
     """The configuration for the agent."""
 
-    thread_id: str
     response_system_prompt: str = prompts.RESPONSE_SYSTEM_PROMPT
+    """The system prompt used for generating responses."""
+
     response_model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = (
         "anthropic/claude-3-5-sonnet-20240620"
     )
+    """The language model used for generating responses. Should be in the form: provider/model-name."""
+
     query_system_prompt: str = prompts.QUERY_SYSTEM_PROMPT
+    """The system prompt used for processing and refining queries."""
+
     query_model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = (
         "openai/gpt-4o-mini"
     )
+    """The language model used for processing and refining queries. Should be in the form: provider/model-name."""

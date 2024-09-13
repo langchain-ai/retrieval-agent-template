@@ -30,12 +30,12 @@ def make_text_encoder(model_name: str) -> Embeddings:
         case "cohere":
             from langchain_cohere import CohereEmbeddings
 
-            return CohereEmbeddings(model=model)
+            return CohereEmbeddings(model=model)  # type: ignore
         case _:
             raise ValueError(f"Unsupported embedding provider: {provider}")
 
 
-## Retriever constructurs
+## Retriever constructors
 
 
 @contextmanager
