@@ -7,6 +7,8 @@ from typing import Annotated, Any, Literal, Optional, Type, TypeVar
 
 from langchain_core.runnables import RunnableConfig, ensure_config
 
+from retrieval_graph import prompts
+
 
 @dataclass(kw_only=True)
 class IndexConfiguration:
@@ -64,21 +66,11 @@ class Configuration(IndexConfiguration):
     """The configuration for the agent."""
 
     thread_id: str
-    response_system_prompt: str = """You are a helpful AI assistant. Answer the user's questions based on the retrieved documents.
-
-{retrieved_docs}"
-
-System time: {system_time}"""
-    response_model: Annotated[
-        str, {"__template_metadata__": {"kind": "llm"}}
-    ] = "anthropic/claude-3-5-sonnet-20240620"
-    query_system_prompt: str = """Generate search queries to retrieve documents that may help answer the user's question. Previously, you made the following queries:
-    
-<previous_queries/>
-{queries}
-</previous_queries>
-
-System time: {system_time}"""
-    query_model: Annotated[
-        str, {"__template_metadata__": {"kind": "llm"}}
-    ] = "openai/gpt-4o-mini"
+    response_system_prompt: str = prompts.RESPONSE_SYSTEM_PROMPT
+    response_model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = (
+        "anthropic/claude-3-5-sonnet-20240620"
+    )
+    query_system_prompt: str = prompts.QUERY_SYSTEM_PROMPT
+    query_model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = (
+        "openai/gpt-4o-mini"
+    )
