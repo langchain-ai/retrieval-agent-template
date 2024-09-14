@@ -9,7 +9,7 @@ This LangGraph template implements a simple, extensible agent that answers quest
 
 ## Project Prerequisites
 
-Assuming you've already [installed LangGraph Studio](https://github.com/langchain-ai/langgraph-studio/releases) and cloned this repo.
+Assuming you have already [installed LangGraph Studio](https://github.com/langchain-ai/langgraph-studio?tab=readme-ov-file#download).
 
 By default, this template uses:
 
@@ -25,9 +25,28 @@ Copy the [.env.example](.env.example) file. We will copy the relevant environmen
 cp .env.example .env
 ```
 
+1. Setup pre-requisites.
+
+<details>
+<summary>Setup for retrieval provider</summary>
+
+The `retriever_provider` configuration defaults to `elastic`. Follow the instructions below get set up, or pick one of the additional options.
+
 ### Setup Elasticsearch
 
 You can setup a local Elasticsearch instance or use Elastic Cloud.
+
+#### On Elastic Cloud
+
+1. Signup for a free trial with [Elastic Cloud](https://cloud.elastic.co/registration?onboarding_token=search&cta=cloud-registration&tech=trial&plcmt=article%20content&pg=langchain).
+2. Get the Elasticsearch URL, found under Applications of your deployment.
+3. Create an API key. See the [official elastic documentation](https://www.elastic.co/search-labs/tutorials/install-elasticsearch/elastic-cloud#creating-an-api-key) for more information.
+4. Copy the URL and API key to your `.env` file created above:
+
+```
+ELASTICSEARCH_URL=<ES_URL>
+ELASTICSEARCH_API_KEY=<API_KEY>
+```
 
 #### Locally with Docker
 
@@ -51,19 +70,18 @@ ELASTICSEARCH_USER=elastic
 ELASTICSEARCH_PASSWORD=changeme
 ```
 
-#### On Elastic Cloud
-
-1. Signup for a free trial with [Elastic Cloud](https://cloud.elastic.co/registration?onboarding_token=search&cta=cloud-registration&tech=trial&plcmt=article%20content&pg=langchain).
-2. Get the Elasticsearch URL, found under Applications of your deployment.
-3. Create an API key. See the [official elastic documentation](https://www.elastic.co/search-labs/tutorials/install-elasticsearch/elastic-cloud#creating-an-api-key) for more information.
-4. Copy the URL and API key to your `.env` file created above:
-
-```
-ELASTICSEARCH_URL=<ES_URL>
-ELASTICSEARCH_API_KEY=<API_KEY>
-```
-
 Once you've set this up, you can open this template in LangGraph studio.
+
+</details>
+
+<details>
+<summary>Setup for embedding model</summary>
+
+The `embedding_model` configurable field defaults to `text-embedding-3-small`.
+
+... TODO: Add
+
+</details>
 
 ## Graphs
 
