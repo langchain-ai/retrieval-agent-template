@@ -19,25 +19,34 @@ class IndexConfiguration:
     retriever provider choice, and search parameters.
     """
 
-    user_id: str
-    """Unique identifier for the user."""
+    user_id: str = field(metadata={"description": "Unique identifier for the user."})
 
     embedding_model: Annotated[
         str,
-        # This metadata is only used for the template registry.
-        # You may remove in your own code
         {"__template_metadata__": {"kind": "embeddings"}},
-    ] = "openai/text-embedding-3-small"
-    """Name of the embedding model to use. Must be a valid embedding model name."""
+    ] = field(
+        default="openai/text-embedding-3-small",
+        metadata={
+            "description": "Name of the embedding model to use. Must be a valid embedding model name."
+        },
+    )
 
     retriever_provider: Annotated[
         Literal["elastic", "elastic-local", "pinecone", "mongodb"],
         {"__template_metadata__": {"kind": "retriever"}},
-    ] = "elastic"
-    """The vector store provider to use for retrieval. Options are 'elastic', 'pinecone', or 'mongodb'."""
+    ] = field(
+        default="elastic",
+        metadata={
+            "description": "The vector store provider to use for retrieval. Options are 'elastic', 'pinecone', or 'mongodb'."
+        },
+    )
 
-    search_kwargs: dict[str, Any] = field(default_factory=dict)
-    """Additional keyword arguments to pass to the search function of the retriever."""
+    search_kwargs: dict[str, Any] = field(
+        default_factory=dict,
+        metadata={
+            "description": "Additional keyword arguments to pass to the search function of the retriever."
+        },
+    )
 
     @classmethod
     def from_runnable_config(
@@ -65,18 +74,28 @@ T = TypeVar("T", bound=IndexConfiguration)
 class Configuration(IndexConfiguration):
     """The configuration for the agent."""
 
-    response_system_prompt: str = prompts.RESPONSE_SYSTEM_PROMPT
-    """The system prompt used for generating responses."""
-
-    response_model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = (
-        "anthropic/claude-3-5-sonnet-20240620"
+    response_system_prompt: str = field(
+        default=prompts.RESPONSE_SYSTEM_PROMPT,
+        metadata={"description": "The system prompt used for generating responses."},
     )
-    """The language model used for generating responses. Should be in the form: provider/model-name."""
 
-    query_system_prompt: str = prompts.QUERY_SYSTEM_PROMPT
-    """The system prompt used for processing and refining queries."""
-
-    query_model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = (
-        "openai/gpt-4o-mini"
+    response_model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = field(
+        default="anthropic/claude-3-5-sonnet-20240620",
+        metadata={
+            "description": "The language model used for generating responses. Should be in the form: provider/model-name."
+        },
     )
-    """The language model used for processing and refining queries. Should be in the form: provider/model-name."""
+
+    query_system_prompt: str = field(
+        default=prompts.QUERY_SYSTEM_PROMPT,
+        metadata={
+            "description": "The system prompt used for processing and refining queries."
+        },
+    )
+
+    query_model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = field(
+        default="openai/gpt-4o-mini",
+        metadata={
+            "description": "The language model used for processing and refining queries. Should be in the form: provider/model-name."
+        },
+    )
