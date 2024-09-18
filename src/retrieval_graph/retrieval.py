@@ -19,9 +19,9 @@ from retrieval_graph.configuration import Configuration, IndexConfiguration
 ## Encoder constructors
 
 
-def make_text_encoder(model_name: str) -> Embeddings:
+def make_text_encoder(model: str) -> Embeddings:
     """Connect to the configured text encoder."""
-    provider, model = model_name.split("/", maxsplit=1)
+    provider, model = model.split("/", maxsplit=1)
     match provider:
         case "openai":
             from langchain_openai import OpenAIEmbeddings
@@ -87,7 +87,7 @@ def make_pinecone_retriever(
 
 
 @contextmanager
-def make_mongodb_retriver(
+def make_mongodb_retriever(
     configuration: IndexConfiguration, embedding_model: Embeddings
 ) -> Generator[VectorStoreRetriever, None, None]:
     """Configure this agent to connect to a specific MongoDB Atlas index & namespaces."""
@@ -95,10 +95,13 @@ def make_mongodb_retriver(
 
     vstore = MongoDBAtlasVectorSearch.from_connection_string(
         os.environ["MONGODB_URI"],
-        namespace=f"langgraph_retrieval_agent.{configuration.user_id}",
+        namespace="langgraph_retrieval_agent.default",
         embedding=embedding_model,
     )
-    yield vstore.as_retriever()
+    search_kwargs = configuration.search_kwargs
+    pre_filter = search_kwargs.setdefault("pre_filter", {})
+    pre_filter["user_id"] = {"$eq": configuration.user_id}
+    yield vstore.as_retriever(search_kwargs=search_kwargs)
 
 
 @contextmanager
@@ -121,7 +124,7 @@ def make_retriever(
                 yield retriever
 
         case "mongodb":
-            with make_mongodb_retriver(configuration, embedding_model) as retriever:
+            with make_mongodb_retriever(configuration, embedding_model) as retriever:
                 yield retriever
 
         case _:

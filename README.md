@@ -107,6 +107,32 @@ MongoDB Atlas is a fully-managed cloud database that includes vector search capa
 - Go to the [MongoDB Atlas website](https://www.mongodb.com/cloud/atlas/register) and sign up for a free account.
 - After logging in, create a free cluster by following the on-screen instructions.
 
+2. Create a vector search index
+- Follow the instructions at [the Mongo docs](https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-type/)
+- By default, we use the collection `langgraph_retrieval_agent.default` - create the index there
+- Add an indexed filter for path `user_id`
+- **IMPORTANT**: select Atlas Vector Search NOT Atlas Search when creating the index
+Your final JSON editor configuration should look something like the following:
+
+```json
+{
+  "fields": [
+    {
+      "numDimensions": 1536,
+      "path": "embedding",
+      "similarity": "cosine",
+      "type": "vector"
+    },
+    {
+      "path": "user_id",
+      "type": "filter"
+    }
+  ]
+}
+```
+
+The exact numDimensions may differ if you select a different embedding model.
+
 2. Set up your environment:
 - In the Atlas dashboard, click on "Connect" for your cluster.
 - Choose "Connect your application" and copy the provided connection string.
