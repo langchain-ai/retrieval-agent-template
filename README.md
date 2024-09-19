@@ -1,4 +1,4 @@
-# LangGraph Retrieval Agent Template
+# LangGraph Retrieval Chat Bot Template
 
 [![CI](https://github.com/langchain-ai/retrieval-agent-template/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/langchain-ai/retrieval-agent-template/actions/workflows/unit-tests.yml)
 [![Integration Tests](https://github.com/langchain-ai/retrieval-agent-template/actions/workflows/integration-tests.yml/badge.svg)](https://github.com/langchain-ai/retrieval-agent-template/actions/workflows/integration-tests.yml)
@@ -12,13 +12,19 @@ It contains example graphs exported from `src/retrieval_agent/graph.py` that imp
 
 ## What it does
 
-The retrieval agent:
+This project has two graphs: an "index" graph, and a "retrieval" graph.
+
+The index graph takes in document objects and strings, and it indexes them for the configured `user_id`.
+
+```json
+[{ "page_content": "I have 1 cat." }]
+```
+
+The retrieval chat bot manages a chat history and responds based on fetched context. It:
 
 1. Takes a user **query** as input
-2. Generates a search query based on the conversation history (if not the first turn)
-3. Retrieves relevant documents from an indexed knowledge base
-4. Formulates a response using the retrieved information and conversation context
-5. Returns the generated answer to the user
+2. Searches for documents in filtered by user_id based on the conversation history
+3. Responds using the retrieved information and conversation context
 
 By default, it's set up to answer questions based on the user's indexed documents, which are filtered by the user's ID for personalized responses.
 
@@ -217,6 +223,18 @@ COHERE_API_KEY=your-api-key
 <!--
 End setup instructions
 -->
+
+## Using
+
+Once you've set up your retriever saved your model secrets, it's time to try it out! First, let's add some information to the index. Open studio, select the "indexer" graph from the dropdown in the top-left, provide an example user ID in the configuration at the bottom, and then add some content to chat over.
+
+```json
+[{ "page_content": "My cat knows python." }]
+```
+
+When you upload content, it will be indexed under the configured user ID. You know it's complete when the indexer "delete"'s the content from its graph memory (since it's been persisted in your configured storage provider).
+
+Next, open the "retrieval_graph" using the dropdown in the top-left. Ask it about your cat to confirm it can fetch the required information! If you change the `user_id` at any time, notice how it no longer has access to your information. The graph is doing simple filtering of content so you only access the information under the provided ID.
 
 ## How to customize
 
