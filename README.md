@@ -54,11 +54,28 @@ retriever_provider: elastic
 
 Follow the instructions below to get set up, or pick one of the additional options.
 
-#### Setup Elasticsearch
+#### Elasticsearch
+
+Elasticsearch (as provided by Elastic) is an open source distributed search and analytics engine, scalable data store and vector database optimized for speed and relevance on production-scale workloads.
+
+##### Setup Elasticsearch
+Elasticsearch can be configured as the knowledge base provider for a retrieval agent by being deployed on Elastic Cloud (either as a hosted deployment or serverless project) or on your local environment.
+
+**Elasticsearch Serverless**
+
+1. Signup for a free 14 day trial with [Elasticsearch Serverless](https://cloud.elastic.co/registration?onboarding_token=search&cta=cloud-registration&tech=trial&plcmt=article%20content&pg=langchain).
+2. Get the Elasticsearch URL, found on home under "Copy your connection details".
+3. Create an API key found on home under "API Key".
+4. Copy the URL and API key to your `.env` file created above:
+
+```
+ELASTICSEARCH_URL=<ES_URL>
+ELASTICSEARCH_API_KEY=<API_KEY>
+```
 
 **Elastic Cloud**
 
-1. Signup for a free trial with [Elastic Cloud](https://cloud.elastic.co/registration?onboarding_token=search&cta=cloud-registration&tech=trial&plcmt=article%20content&pg=langchain).
+1. Signup for a free 14 day trial with [Elastic Cloud](https://cloud.elastic.co/registration?onboarding_token=search&cta=cloud-registration&tech=trial&plcmt=article%20content&pg=langchain).
 2. Get the Elasticsearch URL, found under Applications of your deployment.
 3. Create an API key. See the [official elastic documentation](https://www.elastic.co/search-labs/tutorials/install-elasticsearch/elastic-cloud#creating-an-api-key) for more information.
 4. Copy the URL and API key to your `.env` file created above:
