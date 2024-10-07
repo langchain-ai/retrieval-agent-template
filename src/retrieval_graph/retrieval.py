@@ -8,13 +8,14 @@ The retrievers support filtering results by user_id to ensure data isolation bet
 
 import os
 from contextlib import contextmanager
-from typing import Generator
+from typing import Generator, Any, Dict
 
 from langchain_core.embeddings import Embeddings
 from langchain_core.runnables import RunnableConfig
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from retrieval_graph.configuration import Configuration, IndexConfiguration
+
 
 ## Encoder constructors
 
@@ -105,6 +106,47 @@ def make_mongodb_retriever(
 
 
 @contextmanager
+def make_pgvector_retriever(
+    configuration: IndexConfiguration, embedding_model: Embeddings
+) -> Generator[VectorStoreRetriever, None, None]:
+    """Configure this agent to connect to a pgvector index."""
+    from langchain_postgres.vectorstores import PGVector
+
+    connection_string = os.environ.get("PGVECTOR_CONNECTION_STRING")
+    if not connection_string:
+        raise ValueError("PGVECTOR_CONNECTION_STRING environment variable is not set.")
+
+    collection_name = os.environ.get("PGVECTOR_COLLECTION_NAME", "langchain")
+
+    # Initialize the PGVector vector store with async_mode=True
+    vstore = PGVector(
+        connection=connection_string,
+        collection_name=collection_name,
+        embeddings=embedding_model,
+        use_jsonb=True,
+        pre_delete_collection=False,  # Set to True if you want to delete existing data
+        async_mode=True
+    )
+
+    search_kwargs = configuration.search_kwargs
+
+    # Ensure search_kwargs is a dictionary
+    if not isinstance(search_kwargs, dict):
+        search_kwargs = {}
+
+    search_kwargs: Dict[str, Any] = search_kwargs  # Explicit type annotation
+    # Add a filter to ensure we only retrieve documents for the given user_id
+    user_id = configuration.user_id
+    metadata_filter = search_kwargs.setdefault("filter", {})
+    metadata_filter["user_id"] = {"$eq": user_id}
+
+    # Create a retriever from the vector store
+    retriever = vstore.as_retriever(search_kwargs=search_kwargs)
+
+    yield retriever
+
+
+@contextmanager
 def make_retriever(
     config: RunnableConfig,
 ) -> Generator[VectorStoreRetriever, None, None]:
@@ -125,6 +167,10 @@ def make_retriever(
 
         case "mongodb":
             with make_mongodb_retriever(configuration, embedding_model) as retriever:
+                yield retriever
+
+        case "pgvector":
+            with make_pgvector_retriever(configuration, embedding_model) as retriever:
                 yield retriever
 
         case _:
