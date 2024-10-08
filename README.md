@@ -168,6 +168,71 @@ PINECONE_API_KEY=your-api-key
 PINECONE_INDEX_NAME=your-index-name
 ```
 
+#### pgvector
+
+`pgvector` is an open-source PostgreSQL extension for vector similarity search. It allows you to store and query embeddings directly within your PostgreSQL database.
+
+##### Setup pgvector
+
+1. **Install PostgreSQL and pgvector Extension:**
+
+   - Ensure you have PostgreSQL installed (version 14 or higher is recommended).
+   - Install the `pgvector` extension:
+     - For PostgreSQL 14+ on Ubuntu/Debian:
+
+       ```bash
+       # Install PostgreSQL if not installed
+       sudo apt-get install postgresql postgresql-contrib
+
+       # Install pgvector extension
+       sudo apt-get install postgresql-{postgresql-version}-pgvector
+       ```
+
+     - Alternatively, you can install from source. Follow the instructions in the [pgvector GitHub repository](https://github.com/pgvector/pgvector#installation).
+
+2. **Create a Database and Enable pgvector:**
+
+   - Create a new PostgreSQL database or use an existing one.
+
+     ```sql
+     -- In the psql shell
+     CREATE DATABASE your_database_name;
+     ```
+
+   - Connect to your database and enable the `pgvector` extension:
+
+     ```sql
+     -- Connect to your database
+     \c your_database_name
+
+     -- Enable the pgvector extension
+     CREATE EXTENSION vector;
+     ```
+
+3. **Set Up Environment Variables:**
+
+   - In your `.env` file, add the following variables:
+
+     ```
+     PGVECTOR_CONNECTION_STRING=postgresql+psycopg://username:password@localhost:5432/your_database_name
+     PGVECTOR_COLLECTION_NAME=langchain  # You can change this to your preferred collection/table name
+     ```
+
+     - Replace `username`, `password`, `localhost`, `5432`, and `your_database_name` with your actual PostgreSQL credentials and connection details.
+
+4. **Configure the Retriever Provider:**
+
+   - Update the `retriever_provider` in your configuration to use `pgvector`:
+
+     ```yaml
+     retriever_provider: pgvector
+     ```
+
+5. **Verify the Setup:**
+
+   - Ensure your application can connect to the PostgreSQL database.
+   - Test indexing and retrieval to confirm that `pgvector` is functioning correctly.
+
 
 ### Setup Model
 
