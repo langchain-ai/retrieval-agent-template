@@ -13,8 +13,8 @@ from langchain_core.documents import Document
 from langchain_core.messages import BaseMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.pydantic_v1 import BaseModel
-from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph
+from langgraph.runtime import Runtime
 
 from retrieval_graph import retrieval
 from retrieval_graph.configuration import Configuration
@@ -31,7 +31,7 @@ class SearchQuery(BaseModel):
 
 
 async def generate_query(
-    state: State, *, config: RunnableConfig
+    state: State, *, runtime: Runtime[Configuration]
 ) -> dict[str, list[str]]:
     """Generate a search query based on the current state and configuration.
 
@@ -41,7 +41,7 @@ async def generate_query(
 
     Args:
         state (State): The current state containing messages and other information.
-        config (RunnableConfig | None, optional): Configuration for the query generation process.
+        runtime (Runtime[Configuration]): Runtime context containing configuration.
 
     Returns:
         dict[str, list[str]]: A dictionary with a 'queries' key containing a list of generated queries.
@@ -57,7 +57,7 @@ async def generate_query(
         human_input = get_message_text(messages[-1])
         return {"queries": [human_input]}
     else:
-        configuration = Configuration.from_runnable_config(config)
+        configuration = runtime.context
         # Feel free to customize the prompt, model, and other logic!
         prompt = ChatPromptTemplate.from_messages(
             [
@@ -74,17 +74,16 @@ async def generate_query(
                 "messages": state.messages,
                 "queries": "\n- ".join(state.queries),
                 "system_time": datetime.now(tz=timezone.utc).isoformat(),
-            },
-            config,
+            }
         )
-        generated = cast(SearchQuery, await model.ainvoke(message_value, config))
+        generated = cast(SearchQuery, await model.ainvoke(message_value))
         return {
             "queries": [generated.query],
         }
 
 
 async def retrieve(
-    state: State, *, config: RunnableConfig
+    state: State, *, runtime: Runtime[Configuration]
 ) -> dict[str, list[Document]]:
     """Retrieve documents based on the latest query in the state.
 
@@ -94,22 +93,22 @@ async def retrieve(
 
     Args:
         state (State): The current state containing queries and the retriever.
-        config (RunnableConfig | None, optional): Configuration for the retrieval process.
+        runtime (Runtime[Configuration]): Runtime context containing configuration.
 
     Returns:
         dict[str, list[Document]]: A dictionary with a single key "retrieved_docs"
         containing a list of retrieved Document objects.
     """
-    with retrieval.make_retriever(config) as retriever:
-        response = await retriever.ainvoke(state.queries[-1], config)
+    with retrieval.make_retriever(runtime) as retriever:
+        response = await retriever.ainvoke(state.queries[-1])
         return {"retrieved_docs": response}
 
 
 async def respond(
-    state: State, *, config: RunnableConfig
+    state: State, *, runtime: Runtime[Configuration]
 ) -> dict[str, list[BaseMessage]]:
     """Call the LLM powering our "agent"."""
-    configuration = Configuration.from_runnable_config(config)
+    configuration = runtime.context
     # Feel free to customize the prompt, model, and other logic!
     prompt = ChatPromptTemplate.from_messages(
         [
@@ -125,10 +124,9 @@ async def respond(
             "messages": state.messages,
             "retrieved_docs": retrieved_docs,
             "system_time": datetime.now(tz=timezone.utc).isoformat(),
-        },
-        config,
+        }
     )
-    response = await model.ainvoke(message_value, config)
+    response = await model.ainvoke(message_value)
     # We return a list, because this will get added to the existing list
     return {"messages": [response]}
 
@@ -136,7 +134,7 @@ async def respond(
 # Define a new graph (It's just a pipe)
 
 
-builder = StateGraph(State, input=InputState, config_schema=Configuration)
+builder = StateGraph(State, input=InputState, context_schema=Configuration)
 
 builder.add_node(generate_query)
 builder.add_node(retrieve)

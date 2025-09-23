@@ -1,7 +1,6 @@
 import uuid
 
 import pytest
-from langchain_core.runnables import RunnableConfig
 from langsmith import expect, unit
 
 from retrieval_graph import graph, index_graph
@@ -14,27 +13,23 @@ async def test_retrieval_graph() -> None:
     user_id = "test__" + uuid.uuid4().hex
     other_user_id = "test__" + uuid.uuid4().hex
 
-    config = RunnableConfig(
-        configurable={"user_id": user_id, "retriever_provider": "elastic-local"}
-    )
+    context = {"user_id": user_id, "retriever_provider": "elastic-local"}
 
-    result = await index_graph.ainvoke({"docs": simple_doc}, config)
+    result = await index_graph.ainvoke({"docs": simple_doc}, context=context)
     expect(result["docs"]).against(lambda x: not x)  # we delete after the end
 
     res = await graph.ainvoke(
         {"messages": [("user", "Where do cats perform synchronized swimming routes?")]},
-        config,
+        context=context,
     )
     response = str(res["messages"][-1].content)
     expect(response.lower()).to_contain("bowl")
 
     res = await graph.ainvoke(
         {"messages": [("user", "Where do cats perform synchronized swimming routes?")]},
-        {
-            "configurable": {
-                "user_id": other_user_id,
-                "retriever_provider": "elastic-local",
-            }
+        context={
+            "user_id": other_user_id,
+            "retriever_provider": "elastic-local",
         },
     )
     response = str(res["messages"][-1].content)

@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, fields
-from typing import Annotated, Any, Literal, Optional, Type, TypeVar
-
-from langchain_core.runnables import RunnableConfig, ensure_config
+import os
+from dataclasses import dataclass, field
+from typing import Annotated, Any, Literal
 
 from retrieval_graph import prompts
 
@@ -19,7 +18,9 @@ class IndexConfiguration:
     retriever provider choice, and search parameters.
     """
 
-    user_id: str = field(metadata={"description": "Unique identifier for the user."})
+    user_id: str = field(
+        default="", metadata={"description": "Unique identifier for the user."}
+    )
 
     embedding_model: Annotated[
         str,
@@ -48,26 +49,19 @@ class IndexConfiguration:
         },
     )
 
-    @classmethod
-    def from_runnable_config(
-        cls: Type[T], config: Optional[RunnableConfig] = None
-    ) -> T:
-        """Create an IndexConfiguration instance from a RunnableConfig object.
+    def __post_init__(self) -> None:
+        """Populate fields from environment variables if not already set."""
+        # Only populate from environment variables if the field is not already set
+        if not self.user_id:
+            self.user_id = os.environ.get("USER_ID", "")
 
-        Args:
-            cls (Type[T]): The class itself.
-            config (Optional[RunnableConfig]): The configuration object to use.
+        if self.embedding_model == "openai/text-embedding-3-small":
+            self.embedding_model = os.environ.get(
+                "EMBEDDING_MODEL", "openai/text-embedding-3-small"
+            )
 
-        Returns:
-            T: An instance of IndexConfiguration with the specified configuration.
-        """
-        config = ensure_config(config)
-        configurable = config.get("configurable") or {}
-        _fields = {f.name for f in fields(cls) if f.init}
-        return cls(**{k: v for k, v in configurable.items() if k in _fields})
-
-
-T = TypeVar("T", bound=IndexConfiguration)
+        if self.retriever_provider == "elastic":
+            self.retriever_provider = os.environ.get("RETRIEVER_PROVIDER", "elastic")  # type: ignore
 
 
 @dataclass(kw_only=True)
@@ -99,3 +93,19 @@ class Configuration(IndexConfiguration):
             "description": "The language model used for processing and refining queries. Should be in the form: provider/model-name."
         },
     )
+
+    def __post_init__(self) -> None:
+        """Populate fields from environment variables if not already set."""
+        # Call parent's __post_init__ first
+        super().__post_init__()
+
+        # Only populate from environment variables if the field is using the default value
+        if self.response_model == "anthropic/claude-3-5-sonnet-20240620":
+            self.response_model = os.environ.get(
+                "RESPONSE_MODEL", "anthropic/claude-3-5-sonnet-20240620"
+            )
+
+        if self.query_model == "anthropic/claude-3-haiku-20240307":
+            self.query_model = os.environ.get(
+                "QUERY_MODEL", "anthropic/claude-3-haiku-20240307"
+            )

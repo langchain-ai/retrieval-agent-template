@@ -11,8 +11,8 @@ from contextlib import contextmanager
 from typing import Generator
 
 from langchain_core.embeddings import Embeddings
-from langchain_core.runnables import RunnableConfig
 from langchain_core.vectorstores import VectorStoreRetriever
+from langgraph.runtime import get_runtime
 
 from retrieval_graph.configuration import Configuration, IndexConfiguration
 
@@ -105,11 +105,9 @@ def make_mongodb_retriever(
 
 
 @contextmanager
-def make_retriever(
-    config: RunnableConfig,
-) -> Generator[VectorStoreRetriever, None, None]:
+def make_retriever() -> Generator[VectorStoreRetriever, None, None]:
     """Create a retriever for the agent, based on the current configuration."""
-    configuration = IndexConfiguration.from_runnable_config(config)
+    configuration = get_runtime(IndexConfiguration).context
     embedding_model = make_text_encoder(configuration.embedding_model)
     user_id = configuration.user_id
     if not user_id:

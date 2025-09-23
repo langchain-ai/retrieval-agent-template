@@ -1,10 +1,10 @@
 """This "graph" simply exposes an endpoint for a user to upload docs to be indexed."""
 
-from typing import Optional, Sequence
+from typing import Sequence
 
 from langchain_core.documents import Document
-from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph
+from langgraph.runtime import Runtime
 
 from retrieval_graph import retrieval
 from retrieval_graph.configuration import IndexConfiguration
@@ -12,17 +12,17 @@ from retrieval_graph.state import IndexState
 
 
 def ensure_docs_have_user_id(
-    docs: Sequence[Document], config: RunnableConfig
+    docs: Sequence[Document], runtime: Runtime[IndexConfiguration]
 ) -> list[Document]:
     """Ensure that all documents have a user_id in their metadata.
 
         docs (Sequence[Document]): A sequence of Document objects to process.
-        config (RunnableConfig): A configuration object containing the user_id.
+        runtime (Runtime[IndexConfiguration]): Runtime context containing configuration.
 
     Returns:
         list[Document]: A new list of Document objects with updated metadata.
     """
-    user_id = config["configurable"]["user_id"]
+    user_id = runtime.context.user_id
     return [
         Document(
             page_content=doc.page_content, metadata={**doc.metadata, "user_id": user_id}
@@ -32,7 +32,7 @@ def ensure_docs_have_user_id(
 
 
 async def index_docs(
-    state: IndexState, *, config: Optional[RunnableConfig] = None
+    state: IndexState, *, runtime: Runtime[IndexConfiguration]
 ) -> dict[str, str]:
     """Asynchronously index documents in the given state using the configured retriever.
 
@@ -42,12 +42,10 @@ async def index_docs(
 
     Args:
         state (IndexState): The current state containing documents and retriever.
-        config (Optional[RunnableConfig]): Configuration for the indexing process.r
+        runtime (Runtime[IndexConfiguration]): Runtime context containing configuration.
     """
-    if not config:
-        raise ValueError("Configuration required to run index_docs.")
-    with retrieval.make_retriever(config) as retriever:
-        stamped_docs = ensure_docs_have_user_id(state.docs, config)
+    with retrieval.make_retriever(runtime) as retriever:
+        stamped_docs = ensure_docs_have_user_id(state.docs, runtime)
 
         await retriever.aadd_documents(stamped_docs)
     return {"docs": "delete"}
@@ -56,7 +54,7 @@ async def index_docs(
 # Define a new graph
 
 
-builder = StateGraph(IndexState, config_schema=IndexConfiguration)
+builder = StateGraph(IndexState, context_schema=IndexConfiguration)
 builder.add_node(index_docs)
 builder.add_edge("__start__", "index_docs")
 # Finally, we compile it!
