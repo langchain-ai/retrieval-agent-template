@@ -105,6 +105,89 @@ def make_mongodb_retriever(
 
 
 @contextmanager
+def make_pgvector_retriever(
+    configuration: IndexConfiguration, embedding_model: Embeddings
+) -> Generator[VectorStoreRetriever, None, None]:
+    """Configure this agent to connect to a pgvector index."""
+    import json
+    from typing import Any, List, Tuple
+    from langchain_postgres.vectorstores import PGVector as OverPGVector
+    from langchain_core.documents import Document
+
+    class PGVector(OverPGVector):
+        """
+        A custom override of the PGVector class to handle metadata deserialization issues
+        when operating in async_mode. This class addresses a known issue where metadata,
+        stored as byte data, is not properly converted back into a dictionary format
+        during asynchronous operations.
+
+        The override specifically ensures that all metadata, whether stored as bytes,
+        strings, or other unrecognized formats, is correctly processed into a dictionary
+        format suitable for use within the application. This is crucial for maintaining
+        consistency and usability of metadata across asynchronous database interactions.
+
+        Issue Reference:
+        "Metadata field not properly deserialized when using async_mode=True with PGVector #124"
+
+        Methods:
+            _results_to_docs_and_scores: Converts query results from PGVector into a list
+                                         of tuples, each containing a Document and its corresponding
+                                         score, while ensuring metadata is correctly deserialized.
+        """
+        def _results_to_docs_and_scores(self, results: Any) -> List[Tuple[Document, float]]:
+            """Return docs and scores from results."""
+            docs = []
+            for result in results:
+                # Access the metadata
+                metadata = result.EmbeddingStore.cmetadata
+
+                # Process the metadata to ensure it's a dict
+                if not isinstance(metadata, dict):
+                    if hasattr(metadata, 'buf'):
+                        # For Fragment types (e.g., asyncpg.Record)
+                        metadata_bytes = metadata.buf
+                        metadata_str = metadata_bytes.decode('utf-8')
+                        metadata = json.loads(metadata_str)
+                    elif isinstance(metadata, str):
+                        # If it's a JSON string
+                        metadata = json.loads(metadata)
+                    else:
+                        # Handle other types if necessary
+                        metadata = {}
+
+                doc = Document(
+                    id=str(result.EmbeddingStore.id),
+                    page_content=result.EmbeddingStore.document,
+                    metadata=metadata,
+                )
+                score = result.distance if self.embeddings is not None else None
+                docs.append((doc, score))
+            return docs
+
+    connection_string = os.environ.get("PGVECTOR_CONNECTION_STRING")
+    if not connection_string:
+        raise ValueError("PGVECTOR_CONNECTION_STRING environment variable is not set.")
+
+    collection_name = os.environ.get("PGVECTOR_COLLECTION_NAME", "langchain")
+
+    # Initialize the PGVector vector store with async_mode=True
+    vstore = PGVector(
+        connection=connection_string,
+        collection_name=collection_name,
+        embeddings=embedding_model,
+        use_jsonb=True,
+        pre_delete_collection=False,  # Set to True if you want to delete existing data
+        async_mode=True
+    )
+
+    search_kwargs = configuration.search_kwargs
+    user_id = configuration.user_id
+    metadata_filter = search_kwargs.setdefault("filter", {})
+    metadata_filter["user_id"] = {"$eq": user_id}
+    yield vstore.as_retriever(search_kwargs=search_kwargs)
+
+
+@contextmanager
 def make_retriever(
     config: RunnableConfig,
 ) -> Generator[VectorStoreRetriever, None, None]:
@@ -125,6 +208,10 @@ def make_retriever(
 
         case "mongodb":
             with make_mongodb_retriever(configuration, embedding_model) as retriever:
+                yield retriever
+
+        case "pgvector":
+            with make_pgvector_retriever(configuration, embedding_model) as retriever:
                 yield retriever
 
         case _:
