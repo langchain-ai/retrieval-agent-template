@@ -7,7 +7,7 @@ authors = [
 ]
 license = { text = "MIT" }
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "langgraph>=1.0.0,<2.0.0",
     "langchain-openai>=1.1.14",
@@ -26,11 +26,11 @@ dependencies = [
 dev = ["mypy>=1.11.1,<2.0.0", "ruff>=0.6.1"]
 
 [build-system]
-requires = ["setuptools>=83.0.0", "wheel"]
+requires = ["setuptools>=84.1.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.uv]
-constraint-dependencies = ["mypy<2.0.0", "dnspython>=2.9.0; python_version >= '3.11'", "langgraph-api>=0.15.0"]
+constraint-dependencies = ["mypy<2.0.0", "dnspython>=2.9.0", "filelock>=4.2.1", "langgraph-api>=0.15.0"]
 
 [tool.setuptools]
 packages = ["langgraph.templates.retrieval_graph", "retrieval_graph"]

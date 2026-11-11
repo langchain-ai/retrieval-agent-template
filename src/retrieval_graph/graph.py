@@ -6,7 +6,7 @@ and key functions for processing user inputs, generating queries, retrieving
 relevant documents, and formulating responses.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import cast
 
 from langchain_core.documents import Document
@@ -73,7 +73,7 @@ async def generate_query(
             {
                 "messages": state.messages,
                 "queries": "\n- ".join(state.queries),
-                "system_time": datetime.now(tz=timezone.utc).isoformat(),
+                "system_time": datetime.now(tz=UTC).isoformat(),
             },
             config,
         )
@@ -124,7 +124,7 @@ async def respond(
         {
             "messages": state.messages,
             "retrieved_docs": retrieved_docs,
-            "system_time": datetime.now(tz=timezone.utc).isoformat(),
+            "system_time": datetime.now(tz=UTC).isoformat(),
         },
         config,
     )
