@@ -85,11 +85,13 @@ ELASTICSEARCH_API_KEY=<API_KEY>
 ```
 **Local Elasticsearch (Docker)**
 
-```
-docker run -p 127.0.0.1:9200:9200 -d --name elasticsearch --network elastic-net   -e ELASTIC_PASSWORD=changeme   -e "discovery.type=single-node"   -e "xpack.security.http.ssl.enabled=false"   -e "xpack.license.self_generated.type=trial"   docker.elastic.co/elasticsearch/elasticsearch:8.15.1
+To run Elasticsearch locally, use the provided Docker Compose setup from the main project:
+
+```bash
+docker-compose up -d
 ```
 
-See the [official Elastic documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/run-elasticsearch-locally.html) for more information on running it locally.
+This will start a full Elastic Stack including Elasticsearch, Kibana, Logstash, Filebeat, and Metricbeat. See [Getting started with the Elastic Stack and Docker Compose](https://www.elastic.co/blog/getting-started-with-the-elastic-stack-and-docker-compose) for more information.
 
 Then populate the following in your `.env` file:
 

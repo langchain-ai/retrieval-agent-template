@@ -31,6 +31,10 @@ def make_text_encoder(model: str) -> Embeddings:
             from langchain_cohere import CohereEmbeddings
 
             return CohereEmbeddings(model=model)  # type: ignore
+        case "ollama":
+            from langchain_ollama import OllamaEmbeddings
+
+            return OllamaEmbeddings(model=model, base_url=os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434"))
         case _:
             raise ValueError(f"Unsupported embedding provider: {provider}")
 
